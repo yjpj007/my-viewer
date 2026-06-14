@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>数据中心 - 智能管理平台</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --neon-blue: #00f3ff;
+    --neon-purple: #b300ff;
+    --dark-bg: #0a0a0f;
+    --panel-bg: rgba(10, 15, 25, 0.85);
+    --border-glow: 0 0 10px rgba(0, 243, 255, 0.3);
+    --text-primary: #e0f7fa;
+    --text-secondary: #80deea;
+    --accent: #00e5ff;
+    --danger: #ff1744;
+    --success: #00e676;
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', '微软雅黑', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  body::after {
+    content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.02) 2px, rgba(0, 243, 255, 0.02) 4px);
+    pointer-events: none; z-index: 0;
+  }
+  #app { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 9999;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px;
+  }
+  .loading-spinner {
+    width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: var(--neon-blue); border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loginSection { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .login-box {
+    background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 20px; padding: 40px 30px; width: 400px;
+    box-shadow: var(--border-glow), 0 20px 40px rgba(0,0,0,0.5); text-align: center; animation: fadeInUp 0.6s ease;
+  }
+  .login-box h3 {
+    font-size: 1.8rem; letter-spacing: 4px; color: var(--neon-blue);
+    text-shadow: 0 0 10px var(--neon-blue), 0 0 30px var(--neon-blue); margin-bottom: 30px; font-weight: 600;
+  }
+  .login-box input[type="email"], .login-box input[type="password"], .login-box input[type="text"] {
+    width: 100%; padding: 14px 16px; margin: 12px 0; background: rgba(255,255,255,0.08);
+    border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 16px;
+    outline: none; transition: all 0.3s; font-family: var(--font-family);
+  }
+  .login-box input:focus { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(0, 243, 255, 0.5); background: rgba(255,255,255,0.12); }
+  .login-box input::placeholder { color: rgba(255,255,255,0.4); }
+  .password-wrapper { position: relative; margin: 12px 0; }
+  .password-wrapper input { padding-right: 45px !important; margin: 0; }
+  .password-toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none;
+    color: var(--text-secondary); font-size: 1.3rem; cursor: pointer; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center; transition: color 0.2s; padding: 0;
+  }
+  .password-toggle:hover { color: var(--neon-blue); }
+  .login-box button[type="button"] {
+    width: 100%; padding: 14px; margin-top: 20px; background: transparent; border: 2px solid var(--neon-blue);
+    color: var(--neon-blue); font-size: 18px; font-weight: bold; letter-spacing: 3px; border-radius: 8px;
+    cursor: pointer; transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
+  }
+  .login-box button[type="button"]:hover:not(:disabled) { background: var(--neon-blue); color: #0a0a0f; box-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue); }
+  .login-box button[type="button"]:active { transform: scale(0.97); }
+  .login-box button[type="button"]:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--text-secondary); color: var(--text-secondary); }
+  .remember-row { display: flex; align-items: center; margin-top: 15px; color: var(--text-secondary); font-size: 0.9rem; gap: 8px; }
+  .remember-row input[type="checkbox"] { accent-color: var(--neon-blue); width: auto; margin: 0; }
+  #loginError { color: var(--danger); margin-top: 15px; font-size: 14px; text-shadow: 0 0 8px var(--danger); min-height: 20px; }
+  #dataSection { animation: fadeIn 0.5s ease; }
+  .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .title { font-size: 1.8rem; color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); letter-spacing: 2px; font-weight: 600; }
+  .user-email-in-title { font-size: 0.9rem; color: var(--text-secondary); margin-left: 12px; font-weight: normal; letter-spacing: normal; text-shadow: none; }
+  .logout-btn, .admin-btn, .config-btn { background: transparent; padding: 8px 18px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; }
+  .logout-btn { border: 2px solid var(--danger); color: var(--danger); }
+  .logout-btn:hover { background: var(--danger); color: #fff; box-shadow: 0 0 20px var(--danger); }
+  .admin-btn { border-color: var(--neon-blue); color: var(--neon-blue); margin-right: 10px; }
+  .admin-btn:hover { background: var(--neon-blue); color: #0a0a0f; box-shadow: 0 0 20px var(--neon-blue); }
+  .config-btn { border-color: var(--success); color: var(--success); margin-right: 10px; }
+  .config-btn:hover { background: var(--success); color: #0a0a0f; box-shadow: 0 0 20px var(--success); }
+  .logout-btn:active, .admin-btn:active, .config-btn:active { transform: scale(0.95); }
+  .top-bar { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; margin-bottom: 16px; }
+  .stats-grid { display: flex; gap: 15px; flex: 2; }
+  .stat-card {
+    background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--glass-border);
+    border-radius: 14px; padding: 10px 20px; flex: 1; text-align: center;
+    box-shadow: var(--border-glow); transition: transform 0.2s; white-space: nowrap; min-width: 130px;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 4px; }
+  .stat-card .number { font-size: 2rem; font-weight: bold; color: var(--neon-blue); text-shadow: 0 0 8px var(--neon-blue); line-height: 1.2; }
+  .month-selector-inline {
+    background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--glass-border);
+    border-radius: 14px; padding: 10px 20px; flex: 1; min-width: 130px;
+    box-shadow: var(--border-glow); transition: transform 0.2s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .month-selector-inline:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+  .month-selector-inline label { font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 1px; white-space: nowrap; }
+  .month-selector-inline select {
+    background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px;
+    color: white; padding: 8px 14px; font-size: 0.9rem; width: 100%; max-width: 160px;
+  }
+  .filter-bar {
+    display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 20px; backdrop-filter: blur(4px); margin-bottom: 16px;
+  }
+  .filter-bar .filter-input { flex: 2; min-width: 180px; }
+  .filter-bar label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.8rem; margin-bottom: 4px; color: var(--text-secondary); letter-spacing: 1px;
+  }
+  .filter-bar input, .filter-bar button { height: 42px; padding: 0 14px; line-height: 42px; font-size: 0.9rem; box-sizing: border-box; }
+  .filter-bar input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white; }
+  .filter-bar button {
+    background: var(--neon-blue); color: #0a0a0f; font-weight: bold; cursor: pointer;
+    width: auto; border: none; border-radius: 8px; transition: all 0.2s; white-space: nowrap;
+  }
+  .filter-bar button:hover { box-shadow: 0 0 15px var(--neon-blue); }
+  .filter-bar button:active { transform: scale(0.95); }
+  /* 时钟样式 - 无背景无边框，放在标签内右侧 */
+  .filter-bar .live-clock {
+    font-size: 0.8rem; color: var(--neon-blue);
+    white-space: nowrap; letter-spacing: 1px; font-weight: bold;
+    text-shadow: 0 0 8px var(--neon-blue);
+    line-height: 1.4;
+  }
+  .summary-inline {
+    background: rgba(0, 243, 255, 0.1); border-radius: 40px; padding: 8px 20px;
+    font-size: 0.85rem; color: var(--neon-blue); margin-bottom: 20px;
+    word-break: break-word; border-left: 4px solid var(--neon-blue);
+  }
+  .table-fixed-header { background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6); }
+  .thead-container { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .thead-container::-webkit-scrollbar { display: none; }
+  .thead-container table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1000px; }
+  .tbody-container { overflow-x: auto; overflow-y: auto; max-height: 70vh; position: relative; }
+  .tbody-container table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1000px; }
+  th, td { padding: 12px 8px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  th { background: rgba(0, 243, 255, 0.2); font-size: 14px; font-weight: 600; color: var(--neon-blue); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--neon-blue); }
+  td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: var(--text-primary); }
+  .tbody-container tr:hover td { background: rgba(0, 243, 255, 0.08); color: #fff; }
+  th:nth-child(1), td:nth-child(1) { width: 8%; } th:nth-child(2), td:nth-child(2) { width: 12%; } th:nth-child(3), td:nth-child(3) { width: 14%; } th:nth-child(4), td:nth-child(4) { width: 10%; } th:nth-child(5), td:nth-child(5) { width: 9%; } th:nth-child(6), td:nth-child(6) { width: 6%; } th:nth-child(7), td:nth-child(7) { width: 5%; } th:nth-child(8), td:nth-child(8) { width: 5%; } th:nth-child(9), td:nth-child(9) { width: 15%; } th:nth-child(10), td:nth-child(10) { width: 16%; }
+  .error { color: var(--danger); margin-top: 15px; text-shadow: 0 0 8px var(--danger); }
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
+  .modal { background: var(--panel-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; max-width: 90vw; width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6); animation: modalIn 0.3s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .modal h3 { color: var(--neon-blue); margin-bottom: 20px; font-size: 1.5rem; }
+  .modal input, .modal select, .modal textarea, .field-row input, .field-row select, .date-input input, .fuel-mapping-entry input, .cardno-entry input {
+    line-height: 42px !important; padding-top: 0 !important; padding-bottom: 0 !important; vertical-align: middle; height: 42px; box-sizing: border-box;
+  }
+  input[type="date"] { line-height: normal !important; display: inline-flex; align-items: center; }
+  .modal button, .modal .btn-primary, .modal .btn-danger { line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
+  .modal select, .modal input, .modal textarea, .modal label {
+    width: 100%; padding: 10px; margin: 8px 0; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);
+    border-radius: 6px; color: white; font-family: var(--font-family); height: 42px; box-sizing: border-box; font-size: 0.9rem;
+  }
+  .modal textarea { height: 80px; resize: vertical; line-height: 1.4 !important; padding: 8px 12px !important; }
+  .modal button { margin: 10px 5px 0 0; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; height: 42px; font-size: 0.9rem; transition: all 0.2s; }
+  .modal button:hover { filter: brightness(1.1); }
+  .modal button:active { transform: scale(0.96); }
+  .btn-primary { background: var(--neon-blue); color: #0a0a0f; }
+  .btn-primary:hover { box-shadow: 0 0 15px var(--neon-blue); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { box-shadow: 0 0 15px var(--danger); }
+  .btn-success { background: var(--success); color: #0a0a0f; }
+  .btn-success:hover { box-shadow: 0 0 15px var(--success); }
+  .close-btn { background: transparent; color: var(--text-secondary); float: right; font-size: 1.5rem; cursor: pointer; border: none; padding: 0; line-height: 1; transition: color 0.2s; }
+  .close-btn:hover { color: var(--danger); }
+  .field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .field-row label { width: 100px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--text-secondary); margin: 0; padding: 0; font-weight: 500; white-space: nowrap; }
+  .field-row select, .field-row input { flex: 1; min-width: 0; margin: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); border-radius: 8px; color: white; padding: 0 12px; height: 42px; font-size: 0.9rem; line-height: 42px; }
+  .field-group { display: flex; gap: 16px; margin-bottom: 14px; }
+  .field-group .field-row { flex: 1; margin-bottom: 0; }
+  .field-group .field-row label { width: 100px; height: 42px; }
+  .fuel-section, .cardno-section { display: flex; gap: 12px; margin-bottom: 14px; }
+  .fuel-section > label, .cardno-section > label { width: 100px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; padding: 0; }
+  .fuel-editor-container, .cardno-editor-container { flex: 1; min-width: 0; }
+  .mode-switch { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .mode-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 40px; cursor: pointer; color: white; font-size: 0.85rem; transition: all 0.2s; }
+  .mode-btn.active { background: var(--neon-blue); color: #0a0a0f; border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+  .mode-btn:active { transform: scale(0.95); }
+  .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
+  .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
+  .date-range-panel { display: flex; flex-direction: row; gap: 20px; align-items: flex-end; margin-bottom: 20px; flex-wrap: nowrap; }
+  .date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
+  .date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: 80px; text-align: right; }
+  .date-input input { flex: 1; min-width: 0; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; }
+  .batch-action-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; }
+  .edit-create-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+  .station-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px; background: rgba(0,0,0,0.2); }
+  .station-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .station-item label { margin: 0; cursor: pointer; flex:1; word-break: break-word; font-size: 0.85rem; }
+  .station-item input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--neon-blue); }
+  .modal-overlay .modal select, .modal-overlay .modal select option { background-color: #1e293b !important; color: #ffffff !important; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .fuel-preset-btn { background: rgba(0, 243, 255, 0.2); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; position: relative; white-space: nowrap; }
+  .fuel-preset-btn:hover { background: var(--neon-blue); color: #0a0a0f; }
+  .fuel-preset-btn.selected { background: rgba(0, 230, 118, 0.3); border-color: var(--success); color: var(--success); }
+  .fuel-preset-btn.selected::after { content: "✓"; position: absolute; bottom: 0; right: 4px; font-size: 0.7rem; color: var(--success); font-weight: bold; }
+  .fuel-mapping-entry, .cardno-entry { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
+  .fuel-mapping-entry input, .cardno-entry input { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white; padding: 0 10px; height: 36px; font-size: 0.85rem; width: auto; flex: 1; line-height: 36px; }
+  .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { background: none; border: 1px solid var(--danger); color: var(--danger); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .fuel-mapping-entry .btn-remove-fuel:hover, .cardno-entry .btn-remove-cardno:hover { background: var(--danger); color: white; }
+  .user-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .user-table th, .user-table td { padding: 10px 12px; text-align: left; font-size: 0.9rem; border-bottom: 1px solid var(--glass-border); }
+  .user-table th { background: rgba(0, 243, 255, 0.1); color: var(--neon-blue); }
+  .user-table td button { padding: 4px 12px; margin: 2px; font-size: 0.8rem; height: 32px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 1rem; }
+  .empty-state::before { content: "📭"; display: block; font-size: 2rem; margin-bottom: 10px; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  .admin-field { display: flex; align-items: center; gap: 8px; }
+  .admin-field label { width: 50px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--text-secondary); }
+  .admin-field input { flex: 1; min-width: 0; }
+  @media (max-width: 768px) {
+    #app { padding: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    .title { font-size: 1.2rem; }
+    .logout-btn, .admin-btn, .config-btn { padding: 4px 8px; font-size: 0.65rem; letter-spacing: 1px; }
+    .top-bar { flex-direction: row; gap: 10px; }
+    .stats-grid { flex: 2; gap: 8px; }
+    .stat-card { padding: 6px 10px; min-width: 80px; }
+    .stat-card .number { font-size: 1.3rem; }
+    .stat-card .label { font-size: 0.7rem; }
+    .month-selector-inline { flex: 1; padding: 8px 12px; min-width: 80px; }
+    .month-selector-inline label { font-size: 0.65rem; }
+    .month-selector-inline select { padding: 6px 8px; font-size: 0.8rem; max-width: 100%; }
+    .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
+    .filter-bar .filter-input { flex: 1; min-width: 0; }
+    .filter-bar label { font-size: 0.65rem; gap: 6px; }
+    .filter-bar input, .filter-bar button { height: 34px; line-height: 32px; padding: 0 10px; font-size: 0.75rem; box-sizing: border-box; }
+    .filter-bar button { line-height: 34px; }
+    .filter-bar .live-clock { font-size: 0.65rem; }
+    .summary-inline { font-size: 0.7rem; white-space: normal; word-break: break-word; text-align: center; }
+    th, td { padding: 6px 2px; font-size: 0.85rem; }
+    .modal { padding: 12px; width: 95%; }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
+    .modal input:not([type="date"]), .modal textarea { height: 32px !important; line-height: 30px !important; padding: 0 6px !important; font-size: 0.7rem; box-sizing: border-box; }
+    .modal input[type="date"] { height: 32px !important; padding: 0 6px !important; font-size: 0.7rem; line-height: normal !important; }
+    .modal button { padding: 4px 10px; font-size: 0.65rem; margin: 3px 2px 0 0; height: 32px; }
+    .mode-btn { padding: 4px 8px; font-size: 0.65rem; }
+    .batch-controls { gap: 4px; justify-content: center; }
+    .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
+    .date-range-panel { flex-wrap: wrap; gap: 6px; }
+    .date-input { flex: auto; width: 100%; }
+    .date-input label { width: auto; }
+    .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
+    .batch-action-buttons button, .edit-create-footer button { flex: 1; height: 30px; }
+    .station-item label { font-size: 0.65rem; }
+    .field-row { flex-wrap: nowrap !important; gap: 4px; margin-bottom: 8px; }
+    .field-row label { width: 70px !important; height: 30px !important; white-space: nowrap !important; font-size: 0.65rem; justify-content: center; align-items: center; }
+    .field-row select, .field-row input:not([type="date"]) { height: 30px !important; line-height: 28px !important; padding: 0 4px !important; font-size: 0.7rem; box-sizing: border-box; }
+    .field-row input[type="date"] { height: 30px !important; padding: 0 4px !important; font-size: 0.7rem; line-height: normal !important; }
+    .field-group { flex-wrap: nowrap !important; gap: 4px; }
+    .field-group .field-row label { width: 70px !important; height: 30px !important; }
+    .fuel-section, .cardno-section { flex-direction: row !important; gap: 4px; }
+    .fuel-section > label, .cardno-section > label { width: 70px !important; height: 30px !important; font-size: 0.65rem; justify-content: center; align-items: center; }
+    .fuel-preset-btn { padding: 1px 5px !important; font-size: 0.55rem !important; border-radius: 10px; }
+    .fuel-mapping-entry, .cardno-entry { gap: 3px; margin-bottom: 2px; }
+    .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 28px !important; line-height: 26px !important; padding: 0 4px !important; font-size: 0.7rem; box-sizing: border-box; }
+    .fuel-mapping-entry input[type="date"] { height: 28px !important; padding: 0 4px !important; font-size: 0.7rem; line-height: normal !important; }
+    .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 24px; height: 24px; font-size: 0.8rem; }
+    .admin-field label { width: 50px !important; height: 30px !important; font-size: 0.7rem; justify-content: center; }
+    .admin-field input:not([type="date"]) { height: 30px !important; line-height: 28px !important; padding: 0 6px !important; font-size: 0.7rem; box-sizing: border-box; }
+  }
+</style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+<div id="app"></div>
+<script>
+(function() {
+  /* 粒子背景 */
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [], PARTICLE_COUNT = 150, centerX, centerY;
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; centerX = canvas.width / 2; centerY = canvas.height / 2; }
+  window.addEventListener('resize', resizeCanvas); resizeCanvas();
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(initial) { const angle = Math.random() * Math.PI * 2; const distance = initial ? Math.random() * 50 : 10; this.x = centerX + Math.cos(angle) * distance; this.y = centerY + Math.sin(angle) * distance; const speed = 0.5 + Math.random() * 1.5; this.speedX = Math.cos(angle) * speed; this.speedY = Math.sin(angle) * speed; this.size = 0.5 + Math.random() * 2; this.opacity = 0.4 + Math.random() * 0.6; this.color = Math.random() > 0.5 ? 'rgba(0,243,255,' : 'rgba(255,255,255,'; }
+    update() { this.x += this.speedX; this.y += this.speedY; if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset(); }
+    draw(ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fillStyle = this.color + this.opacity + ')'; ctx.fill(); }
+  }
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+  function animateParticles() { ctx.clearRect(0, 0, canvas.width, canvas.height); const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 100); gradient.addColorStop(0, 'rgba(0, 243, 255, 0.05)'); gradient.addColorStop(1, 'rgba(0, 243, 255, 0)'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(ctx); }); requestAnimationFrame(animateParticles); }
+  animateParticles();
+
+  /* 基础配置 */
+  const SUPABASE_URL = "https://gbedtcwsnwteneiokizp.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_6kqvIXFMeqXW-xmwh7GcHQ_LvfH2zon";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPER_ADMIN_EMAIL = "liuping@vip.com";
+
+  const PRESET_FUELS = [
+    { gcode: "60518727", gname: "95号车用汽油(ⅥB)", label: "95汽油" },
+    { gcode: "60518726", gname: "92号车用汽油(ⅥB)", label: "92汽油" },
+    { gcode: "60518728", gname: "98号车用汽油(ⅥA)(ⅥB)", label: "98汽油" },
+    { gcode: "60523537", gname: "爱跑98号车用汽油(ⅥB)", label: "爱跑98" },
+    { gcode: "60514943", gname: "0号车用柴油(VI)", label: "0#柴油" },
+  ];
+
+  const T = {
+    loginTitle: '数据中心', emailPlaceholder: '邮箱', passwordPlaceholder: '密码', loginBtn: '进入系统', logoutBtn: '退出登录',
+    summaryLoading: '加载中...', summaryPrefix: '站点评论次数', noData: '暂无数据', loadErrorPrefix: '系统异常：',
+    tableHeaders: ['站点编码','站点简称','销售单号','油品名称','手机号','姓名','CTC','TTC','评价内容','提交时间'],
+    siteSummaryNone: '无', title: '数据中心欢迎您', monthLabel: '选择月份：', rememberMe: '记住密码',
+    adminBtn: '用户管理', batchBtn: '批量生成账号', configBtn: '站点数据配置',
+    totalLabel: '累计评论总数', todayLabel: '今日评论数', filterPlaceholder: '输入站点编码 (例如 33300011)'
+  };
+
+  let allLogsCache = null, currentFilterStncode = '', monthSelectListener = null, currentRequestController = null;
+  let cachedMonth = null, cachedFilter = null;
+
+  function showLoading(msg = '加载中...') {
+    let overlay = document.getElementById('globalLoading');
+    if (!overlay) {
+      overlay = document.createElement('div'); overlay.id = 'globalLoading'; overlay.className = 'loading-overlay';
+      overlay.innerHTML = '<div class="loading-spinner"></div><div style="color:white; font-size:14px;" id="loadingMsg">'+msg+'</div>';
+      document.body.appendChild(overlay);
+    } else { document.getElementById('loadingMsg').textContent = msg; }
+    overlay.style.display = 'flex';
+  }
+  function hideLoading() { const el = document.getElementById('globalLoading'); if (el) el.style.display = 'none'; }
+
+  /* 实时时钟更新 */
+  function startClock() {
+    const clockEl = document.getElementById('liveClock');
+    if (!clockEl) return;
+    function update() {
+      const now = new Date();
+      const timeStr = now.getFullYear() + '-' +
+        String(now.getMonth()+1).padStart(2,'0') + '-' +
+        String(now.getDate()).padStart(2,'0') + ' ' +
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0') + ':' +
+        String(now.getSeconds()).padStart(2,'0');
+      clockEl.textContent = '⏱ ' + timeStr;
+    }
+    update();
+    setInterval(update, 1000);
+  }
+
+  function buildUI() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    const loginSec = document.createElement('div'); loginSec.id = 'loginSection';
+    loginSec.innerHTML = `
+      <div class="login-box">
+        <h3>${T.loginTitle}</h3>
+        <input type="email" id="email" placeholder="${T.emailPlaceholder}" required autocomplete="email">
+        <div class="password-wrapper">
+          <input type="password" id="password" placeholder="${T.passwordPlaceholder}" required autocomplete="off">
+          <button class="password-toggle" id="togglePwd" type="button" title="显示密码">👁️</button>
+        </div>
+        <div class="remember-row"><input type="checkbox" id="rememberMe"><label for="rememberMe">${T.rememberMe}</label></div>
+        <button type="button" id="loginBtn">${T.loginBtn}</button>
+        <p id="loginError" class="error"></p>
+      </div>`;
+    app.appendChild(loginSec);
+
+    const dataSec = document.createElement('div'); dataSec.id = 'dataSection'; dataSec.style.display = 'none';
+    dataSec.innerHTML = `
+      <div class="header">
+        <div class="title" id="pageTitle">${T.title}</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="adminButtonGroup">
+          <button id="adminBtn" class="admin-btn" style="display:none;">${T.adminBtn}</button>
+          <button id="batchCreateBtn" class="admin-btn" style="display:none;">${T.batchBtn}</button>
+          <button id="configBtn" class="config-btn" style="display:none;">${T.configBtn}</button>
+          <button id="logoutBtn" class="logout-btn">${T.logoutBtn}</button>
+        </div>
+      </div>
+      <div class="top-bar">
+        <div class="stats-grid" id="globalStats">
+          <div class="stat-card"><div class="label">${T.totalLabel}</div><div class="number" id="totalCount">-</div></div>
+          <div class="stat-card"><div class="label">${T.todayLabel}</div><div class="number" id="todayCount">-</div></div>
+        </div>
+        <div class="month-selector-inline">
+          <label for="monthSelect">${T.monthLabel}</label>
+          <select id="monthSelect"><option>加载中...</option></select>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-input">
+          <label for="stncodeFilter">📍 站点编码 <span class="live-clock" id="liveClock"></span></label>
+          <input type="text" id="stncodeFilter" placeholder="${T.filterPlaceholder}">
+        </div>
+        <button id="applyFilterBtn">🔍 查询</button>
+        <button id="resetFilterBtn">🔄 重置</button>
+      </div>
+      <div class="summary-inline" id="summaryInline">${T.summaryLoading}</div>
+      <div class="table-fixed-header">
+        <div class="thead-container" id="theadContainer"><table id="headerTable"><thead id="tableHead"></thead></table></div>
+        <div class="tbody-container" id="tbodyContainer">
+          <table id="dataTable"><tbody id="tableBody"></tbody></table>
+          <div class="empty-state" id="emptyMessage" style="display:none;">${T.noData}</div>
+        </div>
+      </div>
+      <p id="dataError" class="error"></p>`;
+    app.appendChild(dataSec);
+
+    const thead = document.getElementById('tableHead');
+    const tr = document.createElement('tr');
+    T.tableHeaders.forEach(h => { const th = document.createElement('th'); th.textContent = h; tr.appendChild(th); });
+    thead.appendChild(tr);
+    const tbodyContainer = document.getElementById('tbodyContainer');
+    const theadContainer = document.getElementById('theadContainer');
+    if (tbodyContainer && theadContainer) {
+      tbodyContainer.addEventListener('scroll', () => { theadContainer.scrollLeft = tbodyContainer.scrollLeft; });
+    }
+
+    // 启动时钟
+    startClock();
+  }
+
+  function showLogin() {
+    document.getElementById('loginSection').style.display = 'flex';
+    document.getElementById('dataSection').style.display = 'none';
+    const savedEmail = localStorage.getItem('supabase_saved_email');
+    if (savedEmail) { document.getElementById('email').value = savedEmail; document.getElementById('rememberMe').checked = true; }
+  }
+
+  async function getCurrentUserRole() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    if (user.email === SUPER_ADMIN_EMAIL) return 'super_admin';
+    if (user.user_metadata?.role === 'admin') return 'admin';
+    return 'user';
+  }
+
+  async function showData() {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('dataSection').style.display = 'block';
+    allLogsCache = null; currentFilterStncode = ''; document.getElementById('stncodeFilter').value = '';
+    await loadAvailableMonths(); await loadCurrentMonthData(); await updateUIByRole(); await updateTitleWithUser();
+  }
+
+  async function updateTitleWithUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl && user) titleEl.innerHTML = `${T.title} <span class="user-email-in-title">(${user.email})</span>`;
+  }
+
+  async function login() {
+    const btn = document.getElementById('loginBtn'); const errEl = document.getElementById('loginError');
+    const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value;
+    errEl.textContent = '';
+    if (!email || !password) { errEl.textContent = '请输入邮箱和密码'; return; }
+    if (!email.includes('@')) { errEl.textContent = '邮箱格式不正确'; return; }
+    btn.disabled = true; btn.textContent = '验证中...'; showLoading('正在登录...');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (document.getElementById('rememberMe').checked) localStorage.setItem('supabase_saved_email', email);
+      else localStorage.removeItem('supabase_saved_email');
+      hideLoading(); btn.textContent = T.loginBtn; btn.disabled = false;
+      await showData();
+    } catch (err) {
+      hideLoading(); errEl.textContent = T.loadErrorPrefix + (err.message || '未知错误');
+      btn.disabled = false; btn.textContent = T.loginBtn;
+    }
+  }
+
+  async function logout() { await supabase.auth.signOut(); showLogin(); allLogsCache = null; }
+
+  /* 分页获取全部数据 */
+  async function fetchAllLogs(force = false) {
+    if (allLogsCache && !force) return allLogsCache;
+    if (currentRequestController) currentRequestController.abort();
+    currentRequestController = new AbortController();
+    try {
+      let allData = [];
+      let from = 0;
+      const batchSize = 1000;
+      let fetchMore = true;
+      while (fetchMore) {
+        const { data, error } = await supabase
+          .from('request_logs')
+          .select('created_at, request_body')
+          .order('created_at', { ascending: false })
+          .range(from, from + batchSize - 1)
+          .abortSignal(currentRequestController.signal);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData = allData.concat(data);
+          from += batchSize;
+          if (data.length < batchSize) fetchMore = false;
+        } else {
+          fetchMore = false;
+        }
+      }
+      allLogsCache = allData;
+      return allLogsCache;
+    } catch (err) {
+      if (err.name === 'AbortError') return allLogsCache || [];
+      document.getElementById('dataError').textContent = '数据加载失败，请检查网络连接。';
+      return [];
+    }
+  }
+
+  function isToday(createdAt) { const today = new Date(); today.setHours(0,0,0,0); return new Date(createdAt) >= today; }
+  function applyFilter(stncode) { if (!allLogsCache) return []; if (!stncode) return allLogsCache; return allLogsCache.filter(log => log.request_body?.stncode?.toString() === stncode.toString()); }
+
+  async function updateGlobalStats() {
+    if (!allLogsCache) return;
+    const logs = currentFilterStncode ? applyFilter(currentFilterStncode) : allLogsCache;
+    document.getElementById('totalCount').innerText = logs.length;
+    document.getElementById('todayCount').innerText = logs.filter(log => isToday(log.created_at)).length;
+  }
+
+  async function loadAvailableMonths() {
+    showLoading('正在加载月份...');
+    const logs = await fetchAllLogs(); hideLoading();
+    const months = new Set(); logs.forEach(l => { if (l.created_at) months.add(l.created_at.substring(0,7)); });
+    const sorted = Array.from(months).sort().reverse(); const select = document.getElementById('monthSelect');
+    if (monthSelectListener) select.removeEventListener('change', monthSelectListener);
+    select.innerHTML = sorted.map(m => `<option value="${m}">${m}</option>`).join('');
+    if (sorted.length > 0) { select.value = sorted[0]; await updateSummaryAndTable(sorted[0]); }
+    else {
+      select.innerHTML = '<option value="">无数据</option>';
+      document.getElementById('summaryInline').textContent = T.siteSummaryNone;
+      document.getElementById('emptyMessage').style.display = 'block';
+    }
+    monthSelectListener = async function() {
+      const month = this.value;
+      if (month === cachedMonth && currentFilterStncode === cachedFilter) return;
+      cachedMonth = month; cachedFilter = currentFilterStncode;
+      await updateSummaryAndTable(month);
+    };
+    select.addEventListener('change', monthSelectListener);
+  }
+
+  async function updateSummaryAndTable(month) {
+    showLoading('加载数据中...');
+    await fetchAllLogs();
+    const logs = currentFilterStncode ? applyFilter(currentFilterStncode) : allLogsCache;
+    renderSummary(month, logs);
+    renderTable(month, logs);
+    await updateGlobalStats();
+    hideLoading();
+  }
+
+  function renderSummary(month, logs) {
+    const counts = {};
+    logs.forEach(l => { if (!l.created_at || l.created_at.substring(0,7) !== month) return; const code = l.request_body?.stncode; if (code) counts[code] = (counts[code]||0)+1; });
+    const items = Object.entries(counts).map(([c, n]) => `${c}: <span style="color: var(--success); font-weight: bold;">${n}次</span>`).join(' | ');
+    const summaryEl = document.getElementById('summaryInline');
+    summaryEl.innerHTML = items ? `${T.summaryPrefix} (${month})：${items}` : `${T.summaryPrefix} (${month})：${T.siteSummaryNone}`;
+  }
+
+  function renderTable(month, logs) {
+    const filtered = logs.filter(l => l.created_at?.substring(0,7) === month);
+    const tbody = document.getElementById('tableBody'), emptyMsg = document.getElementById('emptyMessage');
+    tbody.innerHTML = ''; if (filtered.length === 0) { emptyMsg.style.display = 'block'; return; }
+    emptyMsg.style.display = 'none';
+    const fragment = document.createDocumentFragment();
+    filtered.forEach(row => {
+      const body = row.request_body; const tr = document.createElement('tr');
+      [body?.stncode, body?.shortname, body?.saleno, body?.gname, body?.mobilephone, body?.name, body?.ctc, body?.ttc,
+       (body?.questiondata?.length ? body.questiondata[body.questiondata.length-1].answercontent : ''), row.created_at]
+      .forEach(v => { const td = document.createElement('td'); td.textContent = v || ''; if (v && v.length > 15) td.title = v; tr.appendChild(td); });
+      fragment.appendChild(tr);
+    });
+    tbody.appendChild(fragment);
+  }
+
+  async function loadCurrentMonthData() {
+    await fetchAllLogs(); const select = document.getElementById('monthSelect');
+    if (select.value) await updateSummaryAndTable(select.value);
+    else { document.getElementById('summaryInline').textContent = T.siteSummaryNone; document.getElementById('emptyMessage').style.display = 'block'; }
+  }
+
+  function togglePasswordVisibility() {
+    const pwd = document.getElementById('password'), btn = document.getElementById('togglePwd');
+    if (pwd.type === 'password') { pwd.type = 'text'; btn.innerHTML = '🙈'; } else { pwd.type = 'password'; btn.innerHTML = '👁️'; }
+  }
+
+  async function updateUIByRole() {
+    const role = await getCurrentUserRole(); const display = role === 'super_admin' ? 'inline-block' : 'none';
+    document.getElementById('adminBtn').style.display = display;
+    document.getElementById('batchCreateBtn').style.display = display;
+    document.getElementById('configBtn').style.display = display;
+  }
+
+  /* 用户管理面板 */
+  async function showAdminPanel() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert('请先登录'); return; }
+    showLoading('正在获取用户列表...');
+    let users = [];
+    try {
+      const { data, error } = await supabase.functions.invoke('list-users', { method: 'POST' });
+      if (error) throw new Error(error.message);
+      users = data.users || [];
+    } catch (err) { hideLoading(); alert('获取用户列表失败：' + err.message); return; }
+    hideLoading();
+    const role = await getCurrentUserRole(); const isSuperAdmin = (role === 'super_admin');
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width: 900px;" role="dialog" aria-modal="true">
+        <span class="close-btn" id="closeAdminPanel" aria-label="关闭">&times;</span>
+        <h3>用户管理</h3>
+        <div id="adminPanelMsg" class="error" style="margin-bottom: 10px;"></div>
+        <div id="addAdminSection" style="display: ${isSuperAdmin ? 'block' : 'none'}; margin-bottom: 20px; border: 1px solid var(--glass-border); border-radius: 8px; padding: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="color: var(--accent); margin:0;">添加管理员</h4>
+            <button class="btn-primary" id="doAddAdmin" style="margin:0;">创建</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="admin-field"><label>邮箱</label><input type="email" id="newAdminEmail" placeholder="admin@example.com"></div>
+            <div class="admin-field"><label>密码</label><input type="password" id="newAdminPassword" placeholder="至少6位" autocomplete="off"></div>
+          </div>
+        </div>
+        <h4 style="color: var(--neon-blue); margin-bottom: 10px;">用户列表 (${users.length})</h4>
+        <div style="max-height: 400px; overflow-y: auto;">
+          <table class="user-table">
+            <thead><tr><th>邮箱</th><th>用户ID</th><th>角色</th><th style="text-align: center;">操作</th></tr></thead>
+            <tbody id="userTableBody">
+              ${users.map(u => {
+                let roleLabel = '普通用户';
+                if (u.email === SUPER_ADMIN_EMAIL) roleLabel = '超级管理员';
+                else if (u.user_metadata?.role === 'admin') roleLabel = '管理员';
+                const isSuperAdminUser = (u.email === SUPER_ADMIN_EMAIL);
+                return `<tr>
+                  <td>${u.email || ''}</td>
+                  <td style="font-family: monospace;">${u.id.substring(0,8)}...</td>
+                  <td>${roleLabel}</td>
+                  <td style="text-align: center;">
+                    <button class="btn-primary reset-pwd-btn" data-userid="${u.id}" data-email="${u.email}">重置密码</button>
+                    <button class="btn-danger delete-user-btn" data-userid="${u.id}" data-email="${u.email}" ${isSuperAdminUser ? 'disabled title="不允许删除超级管理员"' : ''}>删除</button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById('closeAdminPanel').onclick = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    const userTableBody = document.getElementById('userTableBody');
+    userTableBody.addEventListener('click', async (e) => {
+      const target = e.target;
+      if (target.classList.contains('reset-pwd-btn')) {
+        const userId = target.dataset.userid; const email = target.dataset.email; const newPassword = prompt(`为 ${email} 设置新密码（至少6位）：`);
+        if (!newPassword || newPassword.length < 6) { alert('密码不能为空且至少6位'); return; }
+        try { const { data, error } = await supabase.functions.invoke('reset-user-password', { method: 'POST', body: { userId, newPassword } }); if (error) throw new Error(error.message); if (data?.success) alert('密码重置成功！'); else throw new Error(data?.error || '未知错误'); } catch (err) { alert('重置失败：' + err.message); }
+      } else if (target.classList.contains('delete-user-btn')) {
+        const userId = target.dataset.userid; const email = target.dataset.email; if (email === SUPER_ADMIN_EMAIL) { alert('不允许删除超级管理员！'); return; }
+        if (!confirm(`确定要删除用户 ${email} 吗？此操作不可撤销！`)) return;
+        try { const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) }); const result = await res.json(); if (!res.ok) throw new Error(result.error); alert('用户已删除'); overlay.remove(); showAdminPanel(); } catch (err) { alert('删除失败：' + err.message); }
+      }
+    });
+    if (isSuperAdmin) {
+      document.getElementById('doAddAdmin').onclick = async () => {
+        const email = document.getElementById('newAdminEmail').value.trim(); const password = document.getElementById('newAdminPassword').value; const msgEl = document.getElementById('adminPanelMsg');
+        msgEl.textContent = ''; if (!email || !password || password.length < 6) { msgEl.textContent = '请输入有效邮箱和至少6位密码'; return; }
+        try { const res = await fetch(`${SUPABASE_URL}/functions/v1/create-admin-user`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }); const result = await res.json(); if (!res.ok) throw new Error(result.error); alert('管理员创建成功！'); overlay.remove(); showAdminPanel(); } catch (err) { msgEl.textContent = '创建失败: ' + err.message; }
+      };
+    }
+  }
+
+  /* 批量创建账号（含孤儿清理） */
+  async function batchCreateAccounts() {
+    const btn = document.getElementById('batchCreateBtn'); const originalText = btn.innerText; btn.innerText = '清理并生成...'; btn.disabled = true;
+    showLoading('正在清理无效用户绑定...');
+    try {
+      const { data: cleanResult, error: cleanError } = await supabase.rpc('clean_orphan_user_ids');
+      if (cleanError) throw new Error('清理孤儿用户ID失败: ' + cleanError.message);
+      console.log('清理了 ' + cleanResult + ' 个孤儿 user_id');
+      hideLoading(); showLoading('正在批量生成账号...');
+      const { data: { session } } = await supabase.auth.getSession(); if (!session) throw new Error('未登录');
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/batch-create-accounts`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } });
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const json = await res.json();
+        if (res.ok) alert(json.message || '批量生成完成');
+        else alert('错误：' + (json.error || json.message || '未知错误'));
+      } else if (!res.ok) {
+        const text = await res.text(); alert('生成失败：' + text);
+      } else {
+        const blob = await res.blob(); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'accounts.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        alert('批量生成完成，CSV 文件已下载。');
+      }
+    } catch (err) { alert('操作失败：' + err.message); }
+    finally { hideLoading(); btn.innerText = originalText; btn.disabled = false; }
+  }
+
+  /* ==================== 站点配置相关 ==================== */
+  let stationsList = [], currentEditStationId = null;
+
+  function parseFuelMappings(text) {
+    const mappings = [];
+    if (!text) return mappings;
+    const parts = text.split(',');
+    for (let i = 0; i < parts.length; i += 2) {
+      const gcodePart = parts[i]?.trim();
+      const gnamePart = parts[i+1]?.trim();
+      if (gcodePart && gnamePart) {
+        const gcode = gcodePart.replace('gcode:', '').trim();
+        const gname = gnamePart.replace('gname:', '').trim();
+        if (gcode && gname) mappings.push({ gcode, gname });
+      }
+    }
+    return mappings;
+  }
+  function serializeFuelMappings(mappings) { return mappings.map(m => `gcode:${m.gcode},gname:${m.gname}`).join(','); }
+
+  function syncPresetButtons(editorContainer) {
+    const entries = editorContainer.querySelectorAll('.fuel-mapping-entry');
+    const existingGcodes = new Set();
+    entries.forEach(entry => {
+      const gcodeInput = entry.querySelector('.fuel-gcode');
+      if (gcodeInput) { const val = gcodeInput.value.trim(); if (val) existingGcodes.add(val); }
+    });
+    const presetBtns = editorContainer.querySelectorAll('.preset-fuel-btn');
+    presetBtns.forEach(btn => {
+      const gcode = btn.dataset.gcode;
+      if (existingGcodes.has(gcode)) btn.classList.add('selected'); else btn.classList.remove('selected');
+    });
+  }
+
+  function initFuelMappingEditor(container, initialText, isEnabled = true) {
+    const entriesContainer = container.querySelector('#fuelMappingEntries');
+    const presetContainer = container.querySelector('#fuelPresetButtons');
+    if (!entriesContainer || !presetContainer) return;
+    entriesContainer.innerHTML = '';
+    const mappings = parseFuelMappings(initialText);
+    if (mappings.length === 0) mappings.push({ gcode: '', gname: '' });
+    renderFuelEntries(entriesContainer, mappings, isEnabled, container);
+    if (!presetContainer.dataset.bound) {
+      presetContainer.querySelectorAll('.preset-fuel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          togglePresetFuel(entriesContainer, btn.dataset.gcode, btn.dataset.gname, isEnabled, container);
+        });
+      });
+      presetContainer.dataset.bound = 'true';
+    }
+    syncPresetButtons(container);
+  }
+
+  function togglePresetFuel(entriesContainer, gcode, gname, isEnabled, editorContainer) {
+    if (!isEnabled) return;
+    const existing = entriesContainer.querySelectorAll('.fuel-mapping-entry');
+    let found = null;
+    existing.forEach(entry => {
+      const gcodeInput = entry.querySelector('.fuel-gcode');
+      if (gcodeInput && gcodeInput.value.trim() === gcode) found = entry;
+    });
+    if (found) found.remove();
+    else addFuelEntry(entriesContainer, gcode, gname, isEnabled, false);
+    syncPresetButtons(editorContainer);
+  }
+
+  function renderFuelEntries(container, mappings, isEnabled, editorContainer) {
+    container.innerHTML = '';
+    mappings.forEach(m => {
+      const entryDiv = document.createElement('div'); entryDiv.className = 'fuel-mapping-entry';
+      entryDiv.innerHTML = `<input type="text" placeholder="gcode" value="${m.gcode}" class="fuel-gcode" ${isEnabled ? '' : 'readonly'}><input type="text" placeholder="gname" value="${m.gname}" class="fuel-gname" ${isEnabled ? '' : 'readonly'}><button type="button" class="btn-remove-fuel" ${isEnabled ? '' : 'disabled'}>✕</button>`;
+      container.appendChild(entryDiv);
+    });
+    if (isEnabled) {
+      const addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'mode-btn';
+      addBtn.textContent = '+ 自定义油品'; addBtn.style.marginTop = '8px';
+      addBtn.addEventListener('click', () => { addFuelEntry(container, '', '', true, true); if (editorContainer) syncPresetButtons(editorContainer); });
+      container.appendChild(addBtn);
+    }
+    container.querySelectorAll('.btn-remove-fuel').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        if (!isEnabled) return;
+        const entry = e.target.closest('.fuel-mapping-entry');
+        if (entry) { entry.remove(); if (editorContainer) syncPresetButtons(editorContainer); }
+      });
+    });
+  }
+
+  function addFuelEntry(container, gcode, gname, isEnabled, shouldSync = true) {
+    const entryDiv = document.createElement('div'); entryDiv.className = 'fuel-mapping-entry';
+    entryDiv.innerHTML = `<input type="text" placeholder="gcode" value="${gcode}" class="fuel-gcode"><input type="text" placeholder="gname" value="${gname}" class="fuel-gname"><button type="button" class="btn-remove-fuel" ${isEnabled ? '' : 'disabled'}>✕</button>`;
+    const addBtn = container.querySelector('button.mode-btn');
+    container.insertBefore(entryDiv, addBtn);
+    entryDiv.querySelector('.btn-remove-fuel').addEventListener('click', function() {
+      entryDiv.remove();
+      if (shouldSync && container.closest('#fuelMappingEditor')) syncPresetButtons(container.closest('#fuelMappingEditor'));
+    });
+    if (shouldSync && container.closest('#fuelMappingEditor')) syncPresetButtons(container.closest('#fuelMappingEditor'));
+  }
+
+  function getFuelMappingsFromEditor(container) {
+    const entries = container.querySelectorAll('.fuel-mapping-entry');
+    const mappings = [];
+    entries.forEach(entry => {
+      const gcode = entry.querySelector('.fuel-gcode').value.trim();
+      const gname = entry.querySelector('.fuel-gname').value.trim();
+      if (gcode && gname) mappings.push({ gcode, gname });
+    });
+    return mappings;
+  }
+
+  function parseCardnoArray(text) { return text ? text.split(',').map(s => s.trim()).filter(Boolean) : []; }
+  function serializeCardnoArray(arr) { return arr.filter(Boolean).join(','); }
+
+  function initCardnoEditor(container, initialText, isEnabled = true) {
+    const entriesContainer = container.querySelector('#cardnoEntries');
+    if (!entriesContainer) return;
+    entriesContainer.innerHTML = '';
+    const cards = parseCardnoArray(initialText);
+    if (cards.length === 0) for (let i = 0; i < 4; i++) cards.push('');
+    renderCardnoEntries(entriesContainer, cards, isEnabled);
+    const addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'mode-btn';
+    addBtn.textContent = '+ 添加卡号'; addBtn.style.marginTop = '8px';
+    addBtn.addEventListener('click', () => { addCardnoEntry(entriesContainer, '', isEnabled); });
+    entriesContainer.appendChild(addBtn);
+  }
+
+  function renderCardnoEntries(container, cards, isEnabled) {
+    container.querySelectorAll('.cardno-entry').forEach(el => el.remove());
+    cards.forEach(card => {
+      const entryDiv = document.createElement('div'); entryDiv.className = 'cardno-entry';
+      entryDiv.innerHTML = `<input type="text" placeholder="卡号" value="${card}" class="cardno-input" ${isEnabled ? '' : 'readonly'}><button type="button" class="btn-remove-cardno" ${isEnabled ? '' : 'disabled'}>✕</button>`;
+      container.insertBefore(entryDiv, container.querySelector('button.mode-btn'));
+      entryDiv.querySelector('.btn-remove-cardno').addEventListener('click', function() { if (!isEnabled) return; this.closest('.cardno-entry').remove(); });
+    });
+  }
+
+  function addCardnoEntry(container, value, isEnabled) {
+    const entryDiv = document.createElement('div'); entryDiv.className = 'cardno-entry';
+    entryDiv.innerHTML = `<input type="text" placeholder="卡号" value="${value}" class="cardno-input"><button type="button" class="btn-remove-cardno" ${isEnabled ? '' : 'disabled'}>✕</button>`;
+    const addBtn = container.querySelector('button.mode-btn');
+    container.insertBefore(entryDiv, addBtn);
+    entryDiv.querySelector('.btn-remove-cardno').addEventListener('click', function() { entryDiv.remove(); });
+  }
+
+  function getCardnoArrayFromEditor(container) {
+    return Array.from(container.querySelectorAll('.cardno-input')).map(inp => inp.value.trim()).filter(Boolean);
+  }
+
+  async function showStationConfig() {
+    const { data: { session } } = await supabase.auth.getSession(); if (!session) { alert('请先登录'); return; }
+    showLoading('正在加载站点列表...');
+    try {
+      const { data, error } = await supabase.from('stations').select('id, stncode, shortname, startdate, enddate');
+      if (error) throw error;
+      stationsList = data || [];
+    } catch (err) { hideLoading(); alert('加载站点列表失败: ' + err.message); return; }
+    hideLoading();
+
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true">
+        <span class="close-btn" id="closeConfigModal" aria-label="关闭">&times;</span>
+        <h3>站点数据配置</h3>
+        <div class="mode-switch">
+          <div id="tabEdit" class="mode-btn active">编辑站点</div>
+          <div id="tabCreate" class="mode-btn">新增站点</div>
+          <div id="tabBatch" class="mode-btn">批量启用/禁用</div>
+        </div>
+        <div id="panelEdit" class="panel active">
+          <div class="field-row"><label for="stationSelect">选择站点：</label><select id="stationSelect"><option value="">-- 请选择站点 --</option>${stationsList.map(s => `<option value="${s.id}">${s.stncode} - ${s.shortname}</option>`).join('')}</select></div>
+          <div class="field-row"><label>交易组织代码</label><input type="text" id="transactionorgcode"></div>
+          <div class="field-group"><div class="field-row"><label>已用次数</label><input type="number" id="usedcount"></div><div class="field-row"><label>总次数</label><input type="number" id="count"></div></div>
+          <div class="field-group"><div class="field-row"><label>开始日期</label><input type="date" id="startdate"></div><div class="field-row"><label>结束日期</label><input type="date" id="enddate"></div></div>
+          <div class="field-row"><label>最后重置日期</label><input type="date" id="lastresetdate"></div>
+          <div class="field-row"><label>关联用户ID</label><input type="text" id="user_id" placeholder="UUID"></div>
+          <div class="fuel-section"><label>油品映射</label><div class="fuel-editor-container" id="editFuelMappingEditor"><div id="fuelPresetButtons" style="display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: nowrap; overflow-x: auto;">${PRESET_FUELS.map(f => `<button type="button" class="fuel-preset-btn preset-fuel-btn" data-gcode="${f.gcode}" data-gname="${f.gname}">${f.label}</button>`).join('')}</div><div id="fuelMappingEntries"></div></div></div>
+          <div class="cardno-section"><label>卡号数组</label><div class="cardno-editor-container" id="editCardnoEditor"><div id="cardnoEntries"></div></div></div>
+          <div class="edit-create-footer">
+            <button id="deleteStationBtn" class="btn-danger" style="display:none;">🗑️ 删除站点</button>
+            <button id="saveEditBtn" class="btn-primary">保存配置</button>
+            <button id="cancelConfigBtn" class="btn-danger">取消</button>
+          </div>
+        </div>
+        <div id="panelCreate" class="panel">
+          <div class="field-row"><label for="newStncode">站点编码</label><input type="text" id="newStncode" placeholder="例如 33300011"></div>
+          <div class="field-row"><label for="newShortname">站点简称</label><input type="text" id="newShortname" placeholder="中国石化新站点"></div>
+          <div class="field-row"><label>交易组织代码</label><input type="text" id="newTransactionorgcode"></div>
+          <div class="field-group"><div class="field-row"><label>已用次数</label><input type="number" id="newUsedcount"></div><div class="field-row"><label>总次数</label><input type="number" id="newCount"></div></div>
+          <div class="field-group"><div class="field-row"><label>开始日期</label><input type="date" id="newStartdate"></div><div class="field-row"><label>结束日期</label><input type="date" id="newEnddate"></div></div>
+          <div class="fuel-section"><label>油品映射</label><div class="fuel-editor-container" id="fuelMappingEditor"><div id="fuelPresetButtons" style="display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: nowrap; overflow-x: auto;">${PRESET_FUELS.map(f => `<button type="button" class="fuel-preset-btn preset-fuel-btn" data-gcode="${f.gcode}" data-gname="${f.gname}">${f.label}</button>`).join('')}</div><div id="fuelMappingEntries"></div></div></div>
+          <div class="cardno-section"><label>卡号数组</label><div class="cardno-editor-container" id="newCardnoEditor"><div id="cardnoEntries"></div></div></div>
+          <div class="edit-create-footer"><button id="saveCreateBtn" class="btn-primary">保存配置</button><button id="cancelConfigBtn2" class="btn-danger">取消</button></div>
+        </div>
+        <div id="panelBatch" class="panel">
+          <div class="batch-section">
+            <div class="batch-controls"><button id="enableAllBtn" class="btn-success">✅ 全部启用</button><button id="disableAllBtn" class="btn-danger">⛔ 全部禁用</button><button id="enableSelectedBtn" class="btn-primary">✔️ 启用选中</button><button id="disableSelectedBtn" class="btn-primary">❌ 禁用选中</button></div>
+            <div class="date-range-panel"><div class="date-input"><label for="customStartDate">开始日期</label><input type="date" id="customStartDate"></div><div class="date-input"><label for="customEndDate">结束日期</label><input type="date" id="customEndDate"></div></div>
+            <div class="station-list" id="stationChecklist">${stationsList.map(s => { const today = new Date().toISOString().slice(0,10); const start = s.startdate ? s.startdate.slice(0,10) : ''; const end = s.enddate ? s.enddate.slice(0,10) : ''; const isEnabled = (start <= today && today <= end); return `<div class="station-item"><input type="checkbox" value="${s.id}" id="chk_${s.id}"><label for="chk_${s.id}">${s.stncode} - ${s.shortname} (区间: ${start||'无'} ~ ${end||'无'}) ${isEnabled ? '✅启用中' : '❌已禁用'}</label></div>`; }).join('')}</div>
+            <div class="batch-action-buttons"><button id="applyDateToSelected" class="btn-primary">📅 应用到选中</button><button id="applyDateToAll" class="btn-primary">📅 应用到全部</button><button id="cancelBatchBtn" class="btn-danger">取消</button></div>
+          </div>
+        </div>
+        <p id="configMsg" class="error"></p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    document.getElementById('closeConfigModal').onclick = closeModal; document.getElementById('cancelConfigBtn').onclick = closeModal; document.getElementById('cancelConfigBtn2').onclick = closeModal; document.getElementById('cancelBatchBtn').onclick = closeModal;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+    const tabEdit = document.getElementById('tabEdit'), tabCreate = document.getElementById('tabCreate'), tabBatch = document.getElementById('tabBatch');
+    const panelEdit = document.getElementById('panelEdit'), panelCreate = document.getElementById('panelCreate'), panelBatch = document.getElementById('panelBatch');
+    function setActiveTab(active) { [tabEdit, tabCreate, tabBatch].forEach(t => t.classList.remove('active')); [panelEdit, panelCreate, panelBatch].forEach(p => p.classList.remove('active')); if (active === 'edit') { tabEdit.classList.add('active'); panelEdit.classList.add('active'); } else if (active === 'create') { tabCreate.classList.add('active'); panelCreate.classList.add('active'); } else { tabBatch.classList.add('active'); panelBatch.classList.add('active'); } }
+    tabEdit.onclick = () => setActiveTab('edit'); tabCreate.onclick = () => setActiveTab('create'); tabBatch.onclick = () => setActiveTab('batch');
+
+    const getField = id => document.getElementById(id);
+    const setField = (id, val) => { const f = getField(id); if (f) f.value = val !== undefined ? val : ''; };
+    const getFieldVal = id => getField(id).value;
+    const newFields = ['transactionorgcode','usedcount','count','startdate','enddate','lastresetdate','user_id'];
+    const standardFields = ['transactionorgcode','usedcount','count','startdate','enddate'];
+    const getNewFieldVal = (key) => document.getElementById('new' + key.charAt(0).toUpperCase() + key.slice(1)).value;
+    const setNewField = (key, val) => { const el = document.getElementById('new' + key.charAt(0).toUpperCase() + key.slice(1)); if (el) el.value = val; };
+    const DEFAULT_FUEL_MAPPINGS = "gcode:60518727,gname:95号车用汽油(ⅥB),gcode:60518726,gname:92号车用汽油(ⅥB),gcode:60514943,gname:0号车用柴油(VI)";
+    const DEFAULT_CARDNO_ARRAY = "1000419000000071231,1000419000000064385,1000419000000066590,1000419000000069220";
+    const DEFAULT_TRANSACTION_ORG_CODE = "44";
+    const DEFAULT_STARTDATE = new Date().toISOString().slice(0,10);
+    const DEFAULT_ENDDATE = "2099-12-31";
+
+    const editFuelEditor = document.getElementById('editFuelMappingEditor');
+    const editCardnoEditor = document.getElementById('editCardnoEditor');
+    const fuelEditor = document.getElementById('fuelMappingEditor');
+    const newCardnoEditor = document.getElementById('newCardnoEditor');
+
+    initFuelMappingEditor(fuelEditor, DEFAULT_FUEL_MAPPINGS, true);
+    initCardnoEditor(newCardnoEditor, DEFAULT_CARDNO_ARRAY, true);
+
+    function clearEditFields() { newFields.forEach(f => setField(f, '')); }
+    function setDefaultCreateFields() {
+      setNewField('transactionorgcode', DEFAULT_TRANSACTION_ORG_CODE); setNewField('usedcount', ''); setNewField('count', '');
+      setNewField('startdate', DEFAULT_STARTDATE); setNewField('enddate', DEFAULT_ENDDATE);
+      initFuelMappingEditor(fuelEditor, DEFAULT_FUEL_MAPPINGS, true);
+      initCardnoEditor(newCardnoEditor, DEFAULT_CARDNO_ARRAY, true);
+    }
+    tabCreate.addEventListener('click', setDefaultCreateFields);
+
+    async function loadStationForEdit(stationId) {
+      if (!stationId) { clearEditFields(); return; }
+      try {
+        const { data, error } = await supabase.from('stations').select('*').eq('id', stationId).single(); if (error) throw error;
+        if (data) {
+          setField('transactionorgcode', data.transactionorgcode || ''); setField('usedcount', data.usedcount ?? ''); setField('count', data.count ?? '');
+          setField('startdate', data.startdate ? data.startdate.slice(0,10) : ''); setField('enddate', data.enddate ? data.enddate.slice(0,10) : '');
+          setField('lastresetdate', data.lastresetdate ? data.lastresetdate.slice(0,10) : ''); setField('user_id', data.user_id || '');
+          initFuelMappingEditor(editFuelEditor, data.fuelmappings || '', true);
+          initCardnoEditor(editCardnoEditor, data.cardnoarray || '', true);
+        }
+      } catch (err) { document.getElementById('configMsg').textContent = '加载失败: ' + err.message; }
+    }
+    const stationSelect = document.getElementById('stationSelect');
+    stationSelect.addEventListener('change', (e) => {
+      currentEditStationId = e.target.value;
+      if (currentEditStationId) {
+        loadStationForEdit(currentEditStationId);
+        document.getElementById('deleteStationBtn').style.display = 'inline-block';
+      } else {
+        clearEditFields();
+        document.getElementById('deleteStationBtn').style.display = 'none';
+      }
+    });
+
+    document.getElementById('saveEditBtn').onclick = async () => {
+      const msg = document.getElementById('configMsg'); msg.textContent = '';
+      const { data: { session } } = await supabase.auth.getSession(); if (!session) { msg.textContent = '未登录'; return; }
+      if (!currentEditStationId) { msg.textContent = '请选择一个站点'; return; }
+      const config = {};
+      newFields.forEach(f => { const val = getFieldVal(f); if (val !== '') config[f] = (f === 'usedcount' || f === 'count') ? parseInt(val) : val; });
+      config.fuelmappings = serializeFuelMappings(getFuelMappingsFromEditor(editFuelEditor));
+      config.cardnoarray = serializeCardnoArray(getCardnoArrayFromEditor(editCardnoEditor));
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/update-station-config`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stationId: currentEditStationId, config }) });
+        const result = await res.json(); if (!res.ok) throw new Error(result.error); alert('更新成功'); closeModal();
+      } catch (err) { msg.textContent = '保存失败: ' + err.message; }
+    };
+    document.getElementById('saveCreateBtn').onclick = async () => {
+      const msg = document.getElementById('configMsg'); msg.textContent = '';
+      const { data: { session } } = await supabase.auth.getSession(); if (!session) { msg.textContent = '未登录'; return; }
+      const stncode = document.getElementById('newStncode').value.trim(); const shortname = document.getElementById('newShortname').value.trim();
+      if (!stncode || !shortname) { msg.textContent = '站点编码和简称为必填'; return; }
+      const newStation = { stncode, shortname };
+      standardFields.forEach(f => { const val = getNewFieldVal(f); if (val !== '') newStation[f] = (f === 'usedcount' || f === 'count') ? parseInt(val) : val; });
+      newStation.fuelmappings = serializeFuelMappings(getFuelMappingsFromEditor(fuelEditor));
+      newStation.cardnoarray = serializeCardnoArray(getCardnoArrayFromEditor(newCardnoEditor));
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-station`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(newStation) });
+        const result = await res.json(); if (!res.ok) throw new Error(result.error); alert('新增成功'); closeModal();
+      } catch (err) { msg.textContent = '新增失败: ' + err.message; }
+    };
+
+    // 删除站点
+    document.getElementById('deleteStationBtn').onclick = async () => {
+      if (!currentEditStationId) return;
+      const station = stationsList.find(s => s.id === currentEditStationId);
+      const confirmMsg = station ? `确定要删除站点 ${station.stncode} - ${station.shortname} 吗？此操作不可撤销！` : '确定要删除该站点吗？此操作不可撤销！';
+      if (!confirm(confirmMsg)) return;
+      try {
+        const { error } = await supabase.from('stations').delete().eq('id', currentEditStationId);
+        if (error) {
+          console.error('删除失败详情:', error);
+          document.getElementById('configMsg').textContent = '删除失败: ' + (error.message || '权限不足，请确认已执行 RLS 删除策略');
+          return;
+        }
+        alert('站点已删除');
+        closeModal();
+      } catch (err) {
+        document.getElementById('configMsg').textContent = '删除异常: ' + err.message;
+      }
+    };
+
+    async function updateStationsDates(stationIds, startdate, enddate) {
+      if (!stationIds.length) { alert('没有选中任何站点'); return false; }
+      const { data: { session } } = await supabase.auth.getSession(); if (!session) { alert('未登录'); return false; }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/update-stations-dates`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stationIds, startdate, enddate }) });
+        const result = await res.json(); if (!res.ok) throw new Error(result.error); alert(`成功更新 ${result.updatedCount} 个站点`); return true;
+      } catch (err) { alert('批量更新失败: ' + err.message); return false; }
+    }
+    function getSelectedIds() { return Array.from(document.querySelectorAll('#stationChecklist input[type="checkbox"]:checked')).map(cb => cb.value); }
+    async function refreshStationList() {
+      const { data, error } = await supabase.from('stations').select('id, stncode, shortname, startdate, enddate');
+      if (!error && data) { stationsList = data; const container = document.getElementById('stationChecklist'); const today = new Date().toISOString().slice(0,10); container.innerHTML = stationsList.map(s => { const start = s.startdate ? s.startdate.slice(0,10) : ''; const end = s.enddate ? s.enddate.slice(0,10) : ''; const isEnabled = (start <= today && today <= end); return `<div class="station-item"><input type="checkbox" value="${s.id}" id="chk_${s.id}"><label for="chk_${s.id}">${s.stncode} - ${s.shortname} (区间: ${start||'无'} ~ ${end||'无'}) ${isEnabled ? '✅启用中' : '❌已禁用'}</label></div>`; }).join(''); }
+    }
+    const todayStr = new Date().toISOString().slice(0,10), farFuture = '2099-12-31'; const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1); const yesterdayStr = yesterday.toISOString().slice(0,10);
+    document.getElementById('enableAllBtn').onclick = async () => { if (await updateStationsDates(stationsList.map(s=>s.id), todayStr, farFuture)) await refreshStationList(); };
+    document.getElementById('disableAllBtn').onclick = async () => { if (await updateStationsDates(stationsList.map(s=>s.id), null, yesterdayStr)) await refreshStationList(); };
+    document.getElementById('enableSelectedBtn').onclick = async () => { const ids = getSelectedIds(); if (!ids.length) alert('请先勾选'); else if (await updateStationsDates(ids, todayStr, farFuture)) await refreshStationList(); };
+    document.getElementById('disableSelectedBtn').onclick = async () => { const ids = getSelectedIds(); if (!ids.length) alert('请先勾选'); else if (await updateStationsDates(ids, null, yesterdayStr)) await refreshStationList(); };
+    document.getElementById('applyDateToSelected').onclick = async () => { const start = document.getElementById('customStartDate').value, end = document.getElementById('customEndDate').value; if (!start || !end) { alert('请填写完整日期'); return; } const ids = getSelectedIds(); if (!ids.length) { alert('请先勾选站点'); return; } if (await updateStationsDates(ids, start, end)) await refreshStationList(); };
+    document.getElementById('applyDateToAll').onclick = async () => { const start = document.getElementById('customStartDate').value, end = document.getElementById('customEndDate').value; if (!start || !end) { alert('请填写完整日期'); return; } if (await updateStationsDates(stationsList.map(s=>s.id), start, end)) await refreshStationList(); };
+  }
+
+  /* 事件绑定 */
+  function bindEvents() {
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('togglePwd').addEventListener('click', togglePasswordVisibility);
+    document.getElementById('adminBtn').addEventListener('click', showAdminPanel);
+    document.getElementById('batchCreateBtn').addEventListener('click', batchCreateAccounts);
+    document.getElementById('configBtn').addEventListener('click', showStationConfig);
+    let filterTimeout;
+    document.getElementById('stncodeFilter').addEventListener('input', function(e) {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        currentFilterStncode = e.target.value.trim();
+        allLogsCache = null;
+        updateSummaryAndTable(document.getElementById('monthSelect').value);
+      }, 300);
+    });
+    document.getElementById('applyFilterBtn').onclick = async () => {
+      currentFilterStncode = document.getElementById('stncodeFilter').value.trim();
+      allLogsCache = null;
+      await updateSummaryAndTable(document.getElementById('monthSelect').value);
+    };
+    document.getElementById('resetFilterBtn').onclick = async () => {
+      document.getElementById('stncodeFilter').value = ''; currentFilterStncode = ''; allLogsCache = null;
+      await updateSummaryAndTable(document.getElementById('monthSelect').value);
+    };
+  }
+
+  buildUI(); bindEvents();
+  (async function init() { const { data: { session } } = await supabase.auth.getSession(); if (session) await showData(); else showLogin(); })();
+})();
+</script>
+</body>
+</html>
