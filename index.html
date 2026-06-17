@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>数据中心 - 智能管理平台</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data:;">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #b300ff;
+            --neon-cyan: #00e5ff;
+            --neon-magenta: #d400ff;
+            --dark-bg: #0d1230;
+            --panel-bg: rgba(15,20,45,0.85);
+            --border-glow: 0 0 10px rgba(0, 243, 255, 0.3);
+            --text-primary: #e0f7fa;
+            --text-secondary: #80deea;
+            --accent: #00e5ff;
+            --danger: #ff1744;
+            --success: #00e676;
+            --glass: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', '微软雅黑', sans-serif;
+            --table-data-color: #c0c0c0;
+            --table-data-hover-color: #e0e0e0;
+            --login-card-bg: rgba(18,22,50,0.88);
+            --login-border: rgba(0, 243, 255, 0.4);
+            --login-glow-strong: 0 0 30px rgba(0, 195, 255, 0.5), 0 0 60px rgba(179, 0, 255, 0.3);
+            --login-glow-subtle: 0 0 15px rgba(0, 243, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: radial-gradient(ellipse at bottom, #1a1f3a 0%, #0d1230 55%, #080a1a 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,180,255,0.025) 3px, rgba(0,180,255,0.025) 5px),
+                        repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(179,0,255,0.02) 60px, rgba(179,0,255,0.02) 61px);
+            pointer-events: none; z-index: 0; animation: dataFlowShift 20s linear infinite;
+        }
+        @keyframes dataFlowShift { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 60px, 30px 0; } }
+
+        body::after {
+            content: ""; position: fixed; top: -30%; left: -20%; width: 140%; height: 160%;
+            background: radial-gradient(ellipse at 25% 30%, rgba(0,180,255,0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 20%, rgba(140,0,255,0.1) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 70%, rgba(0,220,255,0.1) 0%, transparent 45%),
+                        radial-gradient(ellipse at 80% 75%, rgba(180,0,255,0.08) 0%, transparent 45%);
+            pointer-events: none; z-index: 0; animation: geomBreath 12s ease-in-out infinite;
+        }
+        @keyframes geomBreath { 0%,100% { opacity: 0.7; transform: scale(1); } 30% { opacity: 1; transform: scale(1.06); } 60% { opacity: 0.5; transform: scale(0.95); } 85% { opacity: 0.85; transform: scale(1.03); } }
+
+        #app { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+
+        .loading-overlay, .progress-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 9998; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
+        .loading-spinner { width: 42px; height: 42px; border: 3px solid rgba(255,255,255,0.18); border-top-color: var(--neon-blue); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 20px rgba(0,243,255,0.4); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-container { width: 300px; text-align: center; }
+        .progress-message { color: white; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.12); border-radius: 10px; overflow: hidden; height: 10px; margin-bottom: 8px; }
+        .progress-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00cfff, #b300ff); transition: width 0.3s ease; border-radius: 10px; box-shadow: 0 0 12px rgba(0,200,255,0.6); }
+        .progress-percent { color: white; font-size: 13px; }
+
+        #loginSection { display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; z-index: 2; }
+
+        .login-wrapper { position: relative; perspective: 1000px; animation: loginWrapperIn 0.9s cubic-bezier(0.22,0.61,0.36,1) forwards; }
+        @keyframes loginWrapperIn { 0% { opacity: 0; transform: translateY(40px) scale(0.88); } 60% { opacity: 1; transform: translateY(-6px) scale(1.02); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .login-aura { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(0,200,255,0.15) 0%, rgba(140,0,255,0.1) 30%, transparent 70%); pointer-events: none; animation: auraPulse 4s ease-in-out infinite; z-index: 0; }
+        @keyframes auraPulse { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; } 50% { transform: translate(-50%,-50%) scale(1.18); opacity: 1; } }
+
+        .login-geom-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 340px; height: 340px; border-radius: 50%; border: 1.5px dashed rgba(0,220,255,0.35); pointer-events: none; z-index: 0; animation: ringRotate 25s linear infinite; }
+        .login-geom-ring:nth-child(3) { width: 380px; height: 380px; border-color: rgba(179,0,255,0.28); animation-duration: 30s; animation-direction: reverse; border-style: dotted; }
+        @keyframes ringRotate { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+        .login-box { position: relative; z-index: 1; background: var(--login-card-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--login-border); border-radius: 22px; padding: 44px 34px 38px; width: 420px; max-width: 92vw; box-shadow: var(--login-glow-strong), 0 25px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04); text-align: center; transition: box-shadow 0.5s ease, border-color 0.5s ease; }
+        .login-box:hover { box-shadow: 0 0 40px rgba(0,200,255,0.55), 0 0 80px rgba(140,0,255,0.35), 0 25px 55px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(0,240,255,0.6); }
+        .login-box::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 0deg, rgba(0,220,255,0.04) 30deg, transparent 60deg, rgba(179,0,255,0.04) 120deg, transparent 150deg, rgba(0,220,255,0.03) 210deg, transparent 240deg, rgba(140,0,255,0.03) 300deg, transparent 330deg); pointer-events: none; z-index: 0; animation: innerSweep 8s linear infinite; border-radius: 22px; }
+        @keyframes innerSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .login-box > * { position: relative; z-index: 1; }
+
+        .login-box h3 { font-size: 2rem; letter-spacing: 5px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #00e5ff 0%, #7dd8ff 25%, #c084fc 50%, #60a5fa 75%, #00e5ff 100%); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: titleGradient 5s ease-in-out infinite; filter: drop-shadow(0 0 18px rgba(0,220,255,0.5)); }
+        @keyframes titleGradient { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .login-subtitle { font-size: 0.78rem; color: rgba(180,210,230,0.7); letter-spacing: 3px; margin-bottom: 28px; text-transform: uppercase; animation: subtitleFadeIn 1s 0.3s ease forwards; opacity: 0; }
+        @keyframes subtitleFadeIn { to { opacity: 1; } }
+
+        .login-input-group { position: relative; margin: 14px 0; animation: inputSlideIn 0.6s ease forwards; opacity: 0; }
+        .login-input-group:nth-child(4) { animation-delay: 0.15s; }
+        .login-input-group:nth-child(5) { animation-delay: 0.3s; }
+        @keyframes inputSlideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .login-box input[type="email"], .login-box input[type="password"], .login-box input[type="text"] { width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; color: #fff; font-size: 15px; outline: none; transition: all 0.35s cubic-bezier(0.4,0,0.2,1); font-family: var(--font-family); letter-spacing: 0.5px; }
+        .login-box input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 16px rgba(0,220,255,0.45), 0 0 32px rgba(0,200,255,0.2), inset 0 0 8px rgba(0,220,255,0.06); background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+        .login-box input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+
+        .login-input-group::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent); border-radius: 2px; transition: width 0.4s ease; pointer-events: none; }
+        .login-input-group:focus-within::after { width: 85%; }
+
+        .password-wrapper { position: relative; margin: 0; }
+        .password-wrapper input { padding-right: 48px !important; margin: 0 !important; }
+        .password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: var(--text-secondary); font-size: 1.2rem; cursor: pointer; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; padding: 0; border-radius: 50%; z-index: 1; }
+        .password-toggle:hover { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); background: rgba(0,220,255,0.14); border-color: var(--neon-cyan); box-shadow: 0 0 14px rgba(0,220,255,0.3); }
+
+        .remember-row { display: flex; align-items: center; margin-top: 16px; color: var(--text-secondary); font-size: 0.85rem; gap: 8px; animation: inputSlideIn 0.6s 0.45s ease forwards; opacity: 0; }
+        .remember-row input[type="checkbox"] { accent-color: var(--neon-cyan); width: 16px; height: 16px; cursor: pointer; }
+        .remember-row label { cursor: pointer; user-select: none; }
+
+        .login-box button[type="button"].login-submit-btn { width: 100%; padding: 14px; margin-top: 22px; background: linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(140,0,255,0.15) 100%); border: 2px solid var(--neon-cyan); color: #fff; font-size: 17px; font-weight: 700; letter-spacing: 4px; border-radius: 10px; cursor: pointer; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); text-transform: uppercase; position: relative; overflow: hidden; animation: inputSlideIn 0.6s 0.55s ease forwards; opacity: 0; }
+        .login-box button[type="button"].login-submit-btn::before { content: ""; position: absolute; top: -2px; left: -100%; width: 100%; height: calc(100% + 4px); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.6s ease; z-index: 0; border-radius: 10px; }
+        .login-box button[type="button"].login-submit-btn:hover:not(:disabled)::before { left: 100%; }
+        .login-box button[type="button"].login-submit-btn:hover:not(:disabled) { background: linear-gradient(135deg, rgba(0,210,255,0.35) 0%, rgba(160,0,255,0.35) 100%); border-color: #fff; box-shadow: 0 0 28px rgba(0,220,255,0.7), 0 0 50px rgba(140,0,255,0.5), 0 8px 25px rgba(0,0,0,0.5); color: #fff; transform: translateY(-2px); letter-spacing: 6px; }
+        .login-box button[type="button"].login-submit-btn:active { transform: scale(0.96); transition: transform 0.1s; }
+        .login-box button[type="button"].login-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.5); letter-spacing: 4px; }
+
+        #loginError { color: var(--danger); margin-top: 15px; font-size: 13px; text-shadow: 0 0 8px var(--danger); min-height: 20px; position: relative; z-index: 1; letter-spacing: 1px; animation: errorShake 0.5s ease; }
+        @keyframes errorShake { 0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)} }
+
+        /* 数据区域 */
+        #dataSection { animation: fadeIn 0.5s ease; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .title { font-size: 1.8rem; font-weight: 600; letter-spacing: 2px; display: inline-block; background: linear-gradient(to bottom, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000, #ff7f00); background-size: 100% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: rainbowFlow 8s linear infinite; will-change: background-position; transform: translateZ(0); }
+        @keyframes rainbowFlow { 0% { background-position: 0% 0%; } 100% { background-position: 0% 200%; } }
+        .user-email-in-title { font-size: 0.9rem; color: var(--text-secondary); margin-left: 12px; font-weight: normal; -webkit-text-fill-color: #80deea; }
+        .logout-btn, .admin-btn, .config-btn { background: transparent; padding: 8px 18px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; }
+        .logout-btn { border: 2px solid var(--danger); color: var(--danger); }
+        .logout-btn:hover { background: var(--danger); color: #fff; box-shadow: 0 0 20px var(--danger); }
+        .admin-btn { border-color: var(--neon-blue); color: var(--neon-blue); margin-right: 10px; }
+        .admin-btn:hover { background: var(--neon-blue); color: #0a0a0f; box-shadow: 0 0 20px var(--neon-blue); }
+        .config-btn { border-color: var(--success); color: var(--success); margin-right: 10px; }
+        .config-btn:hover { background: var(--success); color: #0a0a0f; box-shadow: 0 0 20px var(--success); }
+        .logout-btn:active, .admin-btn:active, .config-btn:active { transform: scale(0.95); }
+
+        .top-bar { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; margin-bottom: 16px; }
+        .stats-grid { display: flex; gap: 15px; flex: 2; }
+        .stat-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 14px; padding: 0; text-align: center; box-shadow: var(--border-glow); transition: box-shadow 0.2s; white-space: nowrap; flex: 1; min-width: 130px; height: 80px; perspective: 800px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .stat-card .flip-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; flex-shrink: 0; }
+        .stat-card.flipped .flip-card { transform: rotateY(180deg); }
+        .stat-card .flip-card-front, .stat-card .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; }
+        .stat-card .flip-card-back { transform: rotateY(180deg); }
+        .stat-card .label { font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-card .number { font-size: 2rem; font-weight: bold; color: var(--neon-blue); text-shadow: 0 0 8px var(--neon-blue); line-height: 1.2; }
+        .stat-card:hover { box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+        .month-selector-inline { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 14px; padding: 10px 20px; flex: 1; min-width: 130px; box-shadow: var(--border-glow); transition: transform 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+        .month-selector-inline:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+        .month-selector-inline label { font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 1px; white-space: nowrap; }
+        .month-selector-inline select { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white; padding: 8px 14px; font-size: 0.9rem; width: 100%; max-width: 160px; }
+        select option { background-color: #1e293b !important; color: #ffffff !important; }
+        .filter-bar { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 20px; backdrop-filter: blur(4px); margin-bottom: 16px; }
+        .filter-bar .filter-input { flex: 2; min-width: 180px; }
+        .filter-bar label { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-secondary); letter-spacing: 1px; }
+        .filter-bar input, .filter-bar button { height: 42px; padding: 0 14px; line-height: 42px; font-size: 0.9rem; box-sizing: border-box; }
+        .filter-bar input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white; }
+        .filter-bar button { background: var(--neon-blue); color: #0a0a0f; font-weight: bold; cursor: pointer; width: auto; border: none; border-radius: 8px; transition: all 0.2s; white-space: nowrap; }
+        .filter-bar button:hover { box-shadow: 0 0 15px var(--neon-blue); }
+        .filter-bar button:active { transform: scale(0.95); }
+        .filter-bar .live-clock { font-size: 0.8rem; color: var(--neon-blue); white-space: nowrap; letter-spacing: 1px; font-weight: bold; text-shadow: 0 0 8px var(--neon-blue); line-height: 1.4; }
+        .summary-inline { background: rgba(0, 243, 255, 0.1); border-radius: 40px; padding: 8px 20px; font-size: 0.85rem; color: var(--neon-blue); margin-bottom: 20px; word-break: break-word; border-left: 4px solid var(--neon-blue); }
+        .table-fixed-header { background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6); }
+        .thead-container { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+        .thead-container::-webkit-scrollbar { display: none; }
+        .thead-container table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1000px; }
+        .tbody-container { overflow-x: auto; overflow-y: auto; max-height: 60vh; position: relative; }
+        .tbody-container table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1000px; }
+        th, td { padding: 12px 8px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th { background: rgba(0,243,255,0.2); font-size: 14px; font-weight: 600; color: var(--neon-blue); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--neon-blue); cursor: pointer; user-select: none; }
+        th.sort-asc::after { content: " ▲"; }
+        th.sort-desc::after { content: " ▼"; }
+        td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: var(--table-data-color); }
+        .tbody-container tr:hover td { background: rgba(0,243,255,0.08); color: var(--table-data-hover-color); }
+        .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 15px 0; }
+        .pagination-bar button { background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .pagination-bar button:disabled { opacity: 0.4; cursor: default; }
+        .pagination-bar span { color: var(--text-secondary); font-size: 0.9rem; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; backdrop-filter: blur(10px); background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); animation: slideIn 0.3s ease; }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.success { border-left: 4px solid var(--success); }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .error { color: var(--danger); margin-top: 15px; text-shadow: 0 0 8px var(--danger); }
+        .retry-btn { margin-left: 10px; background: var(--neon-blue); color: #0a0a0f; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .retry-btn:hover { box-shadow: 0 0 15px var(--neon-blue); }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
+        .modal { background: var(--panel-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; max-width: 90vw; width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6); animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity:0; transform: scale(0.9) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+        .modal h3 { color: var(--neon-blue); margin-bottom: 20px; font-size: 1.5rem; }
+        .modal input, .modal select, .modal textarea { line-height: 42px; height: 42px; box-sizing: border-box; width: 100%; margin: 8px 0; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white; font-family: var(--font-family); font-size: 0.9rem; padding: 0 10px; }
+        .modal textarea { height: 80px; resize: vertical; line-height: 1.4; padding: 8px 12px; }
+        .modal button { margin: 10px 5px 0 0; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; height: 42px; font-size: 0.9rem; transition: all 0.2s; }
+        .modal button:hover { filter: brightness(1.1); }
+        .modal button:active { transform: scale(0.96); }
+        .btn-primary { background: var(--neon-blue); color: #0a0a0f; }
+        .btn-primary:hover { box-shadow: 0 0 15px var(--neon-blue); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { box-shadow: 0 0 15px var(--danger); }
+        .btn-success { background: var(--success); color: #0a0a0f; }
+        .btn-success:hover { box-shadow: 0 0 15px var(--success); }
+        .close-btn { background: transparent; color: var(--text-secondary); float: right; font-size: 1.5rem; cursor: pointer; border: none; padding: 0; line-height: 1; transition: color 0.2s; }
+        .close-btn:hover { color: var(--danger); }
+        .field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .field-row label { width: 100px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+        .field-row select, .field-row input { flex: 1; min-width: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); border-radius: 8px; color: white; padding: 0 12px; height: 42px; font-size: 0.9rem; line-height: 42px; }
+        .field-group { display: flex; gap: 16px; margin-bottom: 14px; }
+        .field-group .field-row { flex: 1; margin-bottom: 0; }
+        .fuel-section, .cardno-section { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+        .fuel-section > label, .cardno-section > label { width: 100px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; padding-top: 8px; }
+        .fuel-editor-container, .cardno-editor-container { flex: 1; }
+        .mode-switch { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .mode-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 40px; cursor: pointer; color: white; font-size: 0.85rem; transition: all 0.2s; }
+        .mode-btn.active { background: var(--neon-blue); color: #0a0a0f; border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+        .mode-btn:active { transform: scale(0.95); }
+        .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
+        .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
+        .date-range-panel { display: flex; flex-direction: row; gap: 20px; align-items: flex-end; margin-bottom: 20px; flex-wrap: nowrap; }
+        .date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
+        .date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: 80px; text-align: right; }
+        .date-input input { flex: 1; min-width: 0; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; }
+        .batch-action-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; }
+        .edit-create-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .station-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px; background: rgba(0,0,0,0.2); }
+        .station-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .station-item label { margin: 0; cursor: pointer; flex: 1; word-break: break-word; font-size: 0.85rem; }
+        .station-item input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--neon-blue); }
+        .modal-overlay .modal select, .modal-overlay .modal select option { background-color: #1e293b !important; color: #ffffff !important; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .fuel-preset-btn { background: rgba(0,243,255,0.2); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 0 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; position: relative; white-space: nowrap; height: 42px; line-height: 42px; display: inline-flex; align-items: center; }
+        .fuel-preset-btn:hover { background: var(--neon-blue); color: #0a0a0f; }
+        .fuel-preset-btn.selected { background: rgba(0,230,118,0.3); border-color: var(--success); color: var(--success); }
+        .fuel-preset-btn.selected::after { content: "✓"; position: absolute; bottom: 0; right: 4px; font-size: 0.7rem; color: var(--success); font-weight: bold; }
+        .fuel-mapping-entry, .cardno-entry { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
+        .fuel-mapping-entry input, .cardno-entry input { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white; padding: 0 10px; height: 36px; font-size: 0.85rem; flex: 1; }
+        .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { background: none; border: 1px solid var(--danger); color: var(--danger); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .fuel-mapping-entry .btn-remove-fuel:hover, .cardno-entry .btn-remove-cardno:hover { background: var(--danger); color: white; }
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .user-table th, .user-table td { padding: 10px 12px; text-align: left; font-size: 0.9rem; border-bottom: 1px solid var(--glass-border); }
+        .user-table th { background: rgba(0,243,255,0.1); color: var(--neon-blue); }
+        .user-table td button { padding: 4px 12px; margin: 2px; font-size: 0.8rem; height: 32px; }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 1rem; }
+        .empty-state::before { content: "📭"; display: block; font-size: 2rem; margin-bottom: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .admin-field { display: flex; align-items: center; gap: 8px; }
+        .admin-field label { width: 50px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .admin-field input { flex: 1; min-width: 0; }
+        .lock-icon { cursor: pointer; font-size: 1.2rem; margin-left: 4px; user-select: none; }
+
+        @media (max-width: 768px) {
+            #app { padding: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+            .login-box { padding: 30px 18px 28px; border-radius: 18px; width: 94vw; }
+            .login-box h3 { font-size: 1.5rem; letter-spacing: 3px; }
+            .login-subtitle { font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 20px; }
+            .login-box input[type="email"], .login-box input[type="password"], .login-box input[type="text"] { padding: 12px 14px; font-size: 14px; border-radius: 8px; }
+            .login-box button[type="button"].login-submit-btn { padding: 12px; font-size: 15px; letter-spacing: 3px; border-radius: 8px; }
+            .login-aura { width: 280px; height: 280px; }
+            .login-geom-ring { width: 240px; height: 240px; }
+            .login-geom-ring:nth-child(3) { width: 270px; height: 270px; }
+            .title { font-size: 1.2rem; }
+            .logout-btn, .admin-btn, .config-btn { padding: 4px 8px; font-size: 0.65rem; letter-spacing: 1px; }
+            .top-bar { flex-direction: row; gap: 10px; }
+            .stats-grid { flex: 2; gap: 8px; }
+            .stat-card { height: 70px; min-width: 80px; }
+            .stat-card .number { font-size: 1.3rem; }
+            .stat-card .label { font-size: 0.7rem; }
+            .month-selector-inline { flex: 1; padding: 8px 12px; min-width: 80px; }
+            .month-selector-inline label { font-size: 0.65rem; }
+            .month-selector-inline select { padding: 6px 8px; font-size: 0.8rem; max-width: 100%; }
+            .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
+            .filter-bar .filter-input { flex: 1; min-width: 0; }
+            .filter-bar label { font-size: 0.65rem; gap: 6px; }
+            .filter-bar input, .filter-bar button { height: 34px; line-height: 32px; padding: 0 10px; font-size: 0.75rem; box-sizing: border-box; }
+            .filter-bar button { line-height: 34px; }
+            .filter-bar .live-clock { font-size: 0.65rem; }
+            .summary-inline { font-size: 0.7rem; white-space: normal; word-break: break-word; text-align: center; }
+            th, td { padding: 6px 2px; font-size: 0.85rem; }
+            .modal { padding: 12px; width: 95%; }
+            .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
+            .modal input:not([type="date"]), .modal textarea { height: 32px; line-height: 30px; padding: 0 6px; font-size: 0.7rem; }
+            .modal input[type="date"] { height: 32px; padding: 0 6px; font-size: 0.7rem; line-height: normal; }
+            .modal button { padding: 4px 10px; font-size: 0.65rem; margin: 3px 2px 0 0; height: 32px; }
+            .mode-btn { padding: 4px 8px; font-size: 0.65rem; }
+            .batch-controls { gap: 4px; justify-content: center; }
+            .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
+            .date-range-panel { flex-wrap: wrap; gap: 6px; }
+            .date-input { flex: auto; width: 100%; }
+            .date-input label { width: auto; }
+            .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
+            .batch-action-buttons button, .edit-create-footer button { flex: 1; height: 30px; }
+            .station-item label { font-size: 0.65rem; }
+            .field-row { flex-wrap: nowrap; gap: 4px; margin-bottom: 8px; }
+            .field-row label { width: 70px; white-space: nowrap; font-size: 0.65rem; }
+            .field-row select, .field-row input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 4px; font-size: 0.7rem; }
+            .field-row input[type="date"] { height: 30px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
+            .field-group { flex-wrap: nowrap; gap: 4px; }
+            .fuel-section, .cardno-section { flex-direction: row; gap: 4px; }
+            .fuel-section > label, .cardno-section > label { width: 70px; font-size: 0.65rem; }
+            .fuel-preset-btn { padding: 0 8px; font-size: 0.55rem; border-radius: 10px; height: 30px; line-height: 30px; }
+            .fuel-mapping-entry, .cardno-entry { gap: 3px; margin-bottom: 0; }
+            .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 28px; line-height: 26px; padding: 0 4px; font-size: 0.7rem; }
+            .fuel-mapping-entry input[type="date"] { height: 28px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
+            .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 24px; height: 24px; font-size: 0.8rem; }
+            .admin-field label { width: 50px; font-size: 0.7rem; }
+            .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div id="app"></div>
+    <script>
+        (function() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [], PARTICLE_COUNT = 180, isPageVisible = true, lastFrameTime = 0;
+
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() { this.reset(true); }
+                reset(initial) {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    const angle = Math.random() * Math.PI * 2, speed = 0.4 + Math.random() * 1.8;
+                    this.speedX = Math.cos(angle) * speed;
+                    this.speedY = Math.sin(angle) * speed;
+                    this.size = 0.4 + Math.random() * 2.2;
+                    this.opacity = 0.3 + Math.random() * 0.7;
+                    this.color = Math.random() > 0.35 ? 'rgba(0,220,255,' : 'rgba(200,180,255,';
+                    this.twinkleSpeed = 0.01 + Math.random() * 0.03;
+                    this.twinkleOffset = Math.random() * Math.PI * 2;
+                }
+                update() {
+                    this.x += this.speedX; this.y += this.speedY;
+                    if (this.x < -20 || this.x > canvas.width + 20 || this.y < -20 || this.y > canvas.height + 20) this.reset();
+                    this.twinkleOffset += this.twinkleSpeed;
+                }
+                draw(ctx) {
+                    const currentOpacity = this.opacity * (0.55 + 0.45 * Math.sin(this.twinkleOffset));
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                    ctx.fillStyle = this.color + currentOpacity + ')'; ctx.fill();
+                    if (this.size > 1.5 && currentOpacity > 0.5) {
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI*2);
+                        ctx.fillStyle = this.color + (currentOpacity * 0.2) + ')'; ctx.fill();
+                    }
+                }
+            }
+            for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+            function animateParticles(timestamp) {
+                if (!isPageVisible) { requestAnimationFrame(animateParticles); return; }
+                if (timestamp - lastFrameTime < 33) { requestAnimationFrame(animateParticles); return; }
+                lastFrameTime = timestamp;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const centerX = canvas.width/2, centerY = canvas.height/2;
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 180);
+                gradient.addColorStop(0, 'rgba(0,200,255,0.04)'); gradient.addColorStop(0.5, 'rgba(100,0,200,0.02)'); gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient; ctx.fillRect(0,0,canvas.width,canvas.height);
+                particles.forEach(p => { p.update(); p.draw(ctx); });
+                requestAnimationFrame(animateParticles);
+            }
+            requestAnimationFrame(animateParticles);
+            document.addEventListener('visibilitychange', () => { isPageVisible = !document.hidden; });
+
+            function escapeHtml(str) { if (str == null) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+            function getLocalDateString(date = new Date()) {
+    const d = new Date(date);
+    return d.getFullYear() + '-' + 
+           String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(d.getDate()).padStart(2, '0');
+}
+
+            async function updateTodayTasks() {
+                const tasksEl = document.getElementById('todayTasks');
+                if (!tasksEl) return;
+                try {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const { data, error } = await supabase.from('stations').select('startdate, enddate, count');
+                    if (error) throw error;
+                    let total = 0;
+                    (data || []).forEach(station => {
+                        const start = station.startdate?.slice(0, 10);
+                        const end = station.enddate?.slice(0, 10);
+                        if (start && end && start <= today && today <= end) {
+                            total += station.count || 0;
+                        }
+                    });
+                    tasksEl.innerText = total;
+                } catch (err) {
+                    console.error('获取今日任务失败:', err);
+                    tasksEl.innerText = '!';
+                }
+            }
+
+            const SUPABASE_URL = "https://gbedtcwsnwteneiokizp.supabase.co";
+            const SUPABASE_ANON_KEY = "sb_publishable_6kqvIXFMeqXW-xmwh7GcHQ_LvfH2zon";
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const SUPER_ADMIN_EMAIL = "liuping@vip.com";
+            const PAGE_SIZE = 50;
+            const SUPER_ADMIN_SECRET = '413335259';
+
+            function showToast(message, type='error') {
+                const container = document.getElementById('toastContainer') || (() => { const c = document.createElement('div'); c.id='toastContainer'; c.className='toast-container'; document.body.appendChild(c); return c; })();
+                const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message;
+                container.appendChild(toast); setTimeout(() => toast.remove(), 5000);
+            }
+
+            const PRESET_FUELS = [
+                { gcode: "60518727", gname: "95号车用汽油(ⅥB)", label: "95汽油" },
+                { gcode: "60518726", gname: "92号车用汽油(ⅥB)", label: "92汽油" },
+                { gcode: "60518728", gname: "98号车用汽油(ⅥA)(ⅥB)", label: "98汽油" },
+                { gcode: "60523537", gname: "爱跑98号车用汽油(ⅥB)", label: "爱跑98" },
+                { gcode: "60514943", gname: "0号车用柴油(VI)", label: "0#柴油" },
+            ];
+
+            const T = {
+                loginTitle: '数据中心', loginSubtitle: 'INTELLIGENT MANAGEMENT',
+                emailPlaceholder: '邮箱地址', passwordPlaceholder: '密码', loginBtn: '进入系统',
+                logoutBtn: '退出登录', summaryLoading: '加载中...', summaryPrefix: '站点评论次数',
+                noData: '所选月份暂无评论数据', loadErrorPrefix: '系统异常：',
+                tableHeaders: ['站点编码','站点简称','销售单号','油品名称','手机号','姓名','CTC','TTC','提交时间','评价内容'],
+                siteSummaryNone: '无', title: '数据中心欢迎您', monthLabel: '选择月份：',
+                rememberMe: '记住账号', adminBtn: '用户管理', configBtn: '站点数据配置',
+                totalLabel: ' 本月评论总数', historicalLabel: '历史-评论总数', todayLabel: '今日评论数',
+                tasksLabel: '本日任务',
+                filterPlaceholder: '输入站点编码 (例如 33300011)', pageSize: 50,
+            };
+
+            let currentMonth = null;
+            let currentFilterStncode = '';
+            let currentSort = { col: null, asc: true };
+            let currentPage = 1;
+            let totalRows = 0;
+            let currentPageData = [];
+            let activeAbortController = null;
+            let cachedAllTimeTotal = null;
+            let cachedTodayCount = null;
+            let showHistoricalTotal = false;
+            let currentMonthAggregates = [];
+
+            function showLoading(msg='加载中...') {
+                let overlay = document.getElementById('globalLoading');
+                if (!overlay) {
+                    overlay = document.createElement('div'); overlay.id='globalLoading'; overlay.className='loading-overlay';
+                    overlay.innerHTML = '<div class="loading-spinner"></div><div style="color:white; font-size:14px;" id="loadingMsg">'+escapeHtml(msg)+'</div>';
+                    document.body.appendChild(overlay);
+                } else document.getElementById('loadingMsg').textContent = msg;
+                overlay.style.display = 'flex';
+            }
+            function hideLoading() { const el = document.getElementById('globalLoading'); if (el) el.style.display = 'none'; }
+
+            function showProgress(message='正在加载数据...') {
+                let overlay = document.getElementById('progressOverlay');
+                if (!overlay) {
+                    overlay = document.createElement('div'); overlay.id='progressOverlay'; overlay.className='progress-overlay';
+                    overlay.innerHTML = `<div class="progress-container"><div class="progress-message" id="progressMsg">${escapeHtml(message)}</div><div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBarFill"></div></div><div class="progress-percent" id="progressPercent">0%</div></div>`;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                let currentProgress = 0;
+                const timer = setInterval(() => {
+                    if (currentProgress < 90) {
+                        currentProgress += Math.random() * 3 + 1;
+                        if (currentProgress > 90) currentProgress = 90;
+                    } else {
+                        currentProgress += Math.random() * 0.5;
+                        if (currentProgress > 95) currentProgress = 95;
+                    }
+                    document.getElementById('progressBarFill').style.width = currentProgress + '%';
+                    document.getElementById('progressPercent').textContent = Math.floor(currentProgress) + '%';
+                }, 300);
+                return {
+                    finish: () => { clearInterval(timer); document.getElementById('progressBarFill').style.width='100%'; document.getElementById('progressPercent').textContent='100%'; setTimeout(() => overlay.style.display='none', 300); },
+                    hide: () => { clearInterval(timer); document.getElementById('progressBarFill').style.width='100%'; document.getElementById('progressPercent').textContent='100%'; setTimeout(() => overlay.style.display='none', 200); }
+                };
+            }
+
+            function startClock() {
+                const clockEl = document.getElementById('liveClock'); if (!clockEl) return;
+                function update() {
+                    const now = new Date();
+                    const timeStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+                    clockEl.textContent = '⏱ '+timeStr;
+                }
+                update(); setInterval(update, 1000);
+            }
+
+            function createAbortController() {
+                if (activeAbortController) activeAbortController.abort();
+                activeAbortController = new AbortController();
+                return activeAbortController;
+            }
+
+            async function loadAvailableMonths() {
+                const { data: first } = await supabase.from('request_logs').select('created_at').order('created_at').limit(1);
+                const { data: last } = await supabase.from('request_logs').select('created_at').order('created_at', { ascending: false }).limit(1);
+                const months = [];
+                if (first?.length && last?.length) {
+                    const start = new Date(first[0].created_at);
+                    const end = new Date(last[0].created_at);
+                    let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+                    while (cur <= end) {
+                        months.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`);
+                        cur.setMonth(cur.getMonth()+1);
+                    }
+                    months.reverse();
+                }
+                const select = document.getElementById('monthSelect');
+                if (months.length) {
+                    select.innerHTML = months.map(m => `<option value="${m}">${m}</option>`).join('');
+                    select.value = months[0];
+                    currentMonth = months[0];
+                } else {
+                    select.innerHTML = '<option value="">无数据</option>';
+                }
+            }
+
+            async function fetchPageData() {
+                const controller = createAbortController();
+                const signal = controller.signal;
+                let query = supabase.from('request_logs').select('created_at, request_body', { count: 'exact' });
+                if (currentMonth) {
+                    const startDate = `${currentMonth}-01`;
+                    const [y, m] = currentMonth.split('-').map(Number);
+                    const endDate = m === 12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
+                    query = query.gte('created_at', startDate).lt('created_at', endDate);
+                }
+                if (currentFilterStncode) {
+                    query = query.filter('request_body->>stncode', 'eq', currentFilterStncode);
+                }
+                if (currentSort.col !== null && currentSort.col === 8) {
+                    query = query.order('created_at', { ascending: currentSort.asc });
+                } else {
+                    query = query.order('created_at', { ascending: false });
+                }
+                const from = (currentPage - 1) * PAGE_SIZE;
+                const to = from + PAGE_SIZE - 1;
+                query = query.range(from, to).abortSignal(signal);
+                const { data, error, count } = await query;
+                if (error) throw error;
+                return { data: data || [], total: count || 0 };
+            }
+
+            async function fetchMonthAggregates() {
+                if (!currentMonth) return [];
+                const startDate = `${currentMonth}-01`;
+                const [y, m] = currentMonth.split('-').map(Number);
+                const endDate = m === 12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
+                try {
+                    const { data, error } = await supabase.rpc('get_monthly_station_counts', {
+                        start_date: startDate,
+                        end_date: endDate,
+                        filter_stncode: currentFilterStncode || null
+                    });
+                    if (error) throw error;
+                    return data || [];
+                } catch (err) {
+                    console.error('获取站点聚合失败:', err);
+                    return [];
+                }
+            }
+
+            async function loadStats() {
+                const today = getLocalDateString();
+                if (cachedAllTimeTotal === null) {
+                    const { count } = await supabase.from('request_logs').select('*', { count: 'exact', head: true });
+                    cachedAllTimeTotal = count || 0;
+                }
+                document.getElementById('totalCountBack').innerText = cachedAllTimeTotal;
+                document.getElementById('totalCountFront').innerText = totalRows;
+
+                let todayQuery = supabase.from('request_logs').select('*', { count: 'exact', head: true }).gte('created_at', today);
+                if (currentMonth) {
+                    const startDate = `${currentMonth}-01`;
+                    const [y, m] = currentMonth.split('-').map(Number);
+                    const endDate = m === 12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
+                    todayQuery = todayQuery.gte('created_at', startDate).lt('created_at', endDate);
+                }
+                if (currentFilterStncode) {
+                    todayQuery = todayQuery.filter('request_body->>stncode', 'eq', currentFilterStncode);
+                }
+                const { count } = await todayQuery;
+                cachedTodayCount = count || 0;
+                document.getElementById('todayCount').innerText = cachedTodayCount;
+            }
+
+            async function loadMonthData(silent = false) {
+                if (!silent) showLoading('加载数据中...');
+                try {
+                    const [pageResult, aggData] = await Promise.all([
+                        fetchPageData(),
+                        fetchMonthAggregates()
+                    ]);
+                    currentPageData = pageResult.data;
+                    totalRows = pageResult.total;
+                    currentMonthAggregates = aggData;
+                    renderTable(currentPageData);
+                    await loadStats();
+                    renderSummary();
+                    updateTodayTasks().catch(e => console.error(e));
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    document.getElementById('dataError').innerHTML = `${escapeHtml('数据加载失败：' + err.message)} <button class="retry-btn" id="retryMonthBtn">重试</button>`;
+                    document.getElementById('retryMonthBtn').addEventListener('click', () => {
+                        document.getElementById('dataError').innerHTML = '';
+                        loadMonthData();
+                    });
+                } finally {
+                    if (!silent) hideLoading();
+                }
+            }
+
+            function renderSummary() {
+                const items = currentMonthAggregates.map(({stncode, count}) =>
+                    `${escapeHtml(stncode)}: <span style="color:var(--success);font-weight:bold;">${count}次</span>`
+                ).join(' | ');
+                document.getElementById('summaryInline').innerHTML = items
+                    ? `${T.summaryPrefix} (${currentMonth})：${items}`
+                    : `${T.summaryPrefix} (${currentMonth})：${T.siteSummaryNone}`;
+            }
+
+            function sortTable(colIndex) {
+                if (currentSort.col === colIndex) currentSort.asc = !currentSort.asc;
+                else { currentSort.col = colIndex; currentSort.asc = true; }
+                currentPage = 1;
+                loadMonthData();
+            }
+
+            function renderTable(data) {
+                const tbody = document.getElementById('tableBody'), emptyMsg = document.getElementById('emptyMessage');
+                tbody.innerHTML = '';
+                if (!data || data.length === 0) { emptyMsg.style.display = 'block'; renderPagination(0); return; }
+                emptyMsg.style.display = 'none';
+                let sorted = [...data];
+                if (currentSort.col !== null && currentSort.col !== 8) {
+                    const colIdx = currentSort.col;
+                    sorted.sort((a,b) => {
+                        const bodyA = a.request_body, bodyB = b.request_body;
+                        let valA, valB;
+                        switch(colIdx) {
+                            case 0: valA=bodyA?.stncode||''; valB=bodyB?.stncode||''; break;
+                            case 1: valA=bodyA?.shortname||''; valB=bodyB?.shortname||''; break;
+                            case 2: valA=bodyA?.saleno||''; valB=bodyB?.saleno||''; break;
+                            case 3: valA=bodyA?.gname||''; valB=bodyB?.gname||''; break;
+                            case 4: valA=bodyA?.mobilephone||''; valB=bodyB?.mobilephone||''; break;
+                            case 5: valA=bodyA?.name||''; valB=bodyB?.name||''; break;
+                            case 6: valA=bodyA?.ctc||''; valB=bodyB?.ctc||''; break;
+                            case 7: valA=bodyA?.ttc||''; valB=bodyB?.ttc||''; break;
+                            case 9: valA=bodyA?.questiondata?.length ? bodyA.questiondata[bodyA.questiondata.length-1].answercontent : ''; valB=bodyB?.questiondata?.length ? bodyB.questiondata[bodyB.questiondata.length-1].answercontent : ''; break;
+                            default: return 0;
+                        }
+                        if (valA < valB) return currentSort.asc ? -1 : 1;
+                        if (valA > valB) return currentSort.asc ? 1 : -1;
+                        return 0;
+                    });
+                }
+                const fragment = document.createDocumentFragment();
+                sorted.forEach(row => {
+                    const body = row.request_body; const tr = document.createElement('tr');
+                    [body?.stncode, body?.shortname, body?.saleno, body?.gname, body?.mobilephone, body?.name,
+ body?.ctc, body?.ttc, row.created_at ? row.created_at.substring(0, 19).replace('T', ' ') : '',
+ (body?.questiondata?.length ? body.questiondata[body.questiondata.length-1].answercontent : '')]
+                    .forEach(v => { const td = document.createElement('td'); td.textContent = v || ''; if (v && v.length > 15) td.title = v; tr.appendChild(td); });
+                    fragment.appendChild(tr);
+                });
+                tbody.appendChild(fragment);
+                renderPagination(Math.ceil(totalRows / PAGE_SIZE));
+            }
+
+            function renderPagination(totalPages) {
+                const bar = document.getElementById('paginationBar'); bar.innerHTML = '';
+                if (totalPages <= 1) return;
+                const prevBtn = document.createElement('button'); prevBtn.textContent = '上一页'; prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', () => { if (currentPage>1) { currentPage--; loadMonthData(); } });
+                const nextBtn = document.createElement('button'); nextBtn.textContent = '下一页'; nextBtn.disabled = currentPage === totalPages;
+                nextBtn.addEventListener('click', () => { if (currentPage<totalPages) { currentPage++; loadMonthData(); } });
+                const span = document.createElement('span'); span.textContent = `${currentPage} / ${totalPages}`;
+                bar.appendChild(prevBtn); bar.appendChild(span); bar.appendChild(nextBtn);
+            }
+
+            function applyFilter() {
+                currentFilterStncode = document.getElementById('stncodeFilter').value.trim();
+                currentPage = 1;
+                loadMonthData();
+            }
+            function resetFilter() {
+                document.getElementById('stncodeFilter').value = '';
+                currentFilterStncode = '';
+                currentPage = 1;
+                loadMonthData();
+            }
+
+            function onMonthChange() {
+                currentMonth = document.getElementById('monthSelect').value;
+                currentPage = 1;
+                currentSort = { col: null, asc: true };
+                loadMonthData();
+            }
+
+            function buildUI() {
+                const app = document.getElementById('app'); app.innerHTML = '';
+                const loginSec = document.createElement('div'); loginSec.id='loginSection';
+                loginSec.innerHTML = `
+                <div class="login-wrapper">
+                    <div class="login-aura"></div><div class="login-geom-ring"></div><div class="login-geom-ring"></div>
+                    <div class="login-box">
+                        <h3>${T.loginTitle}</h3><div class="login-subtitle">${T.loginSubtitle}</div>
+                        <div class="login-input-group"><input type="email" id="email" placeholder="${T.emailPlaceholder}" required autocomplete="email"></div>
+                        <div class="login-input-group"><div class="password-wrapper"><input type="password" id="password" placeholder="${T.passwordPlaceholder}" required autocomplete="new-password"><button class="password-toggle" id="togglePwd" type="button" title="显示密码">👁️</button></div></div>
+                        <div class="remember-row"><input type="checkbox" id="rememberMe"><label for="rememberMe">${T.rememberMe}</label></div>
+                        <button type="button" id="loginBtn" class="login-submit-btn">${T.loginBtn}</button>
+                        <p id="loginError" class="error"></p>
+                    </div>
+                </div>`;
+                app.appendChild(loginSec);
+                const dataSec = document.createElement('div'); dataSec.id='dataSection'; dataSec.style.display='none';
+                dataSec.innerHTML = `
+                <div class="header"><div class="title" id="pageTitle"><span>${T.title}</span> <span class="user-email-in-title"></span></div><div style="display:flex;gap:8px;flex-wrap:wrap;" id="adminButtonGroup"><button id="adminBtn" class="admin-btn" style="display:none;">${T.adminBtn}</button><button id="configBtn" class="config-btn" style="display:none;">${T.configBtn}</button><button id="logoutBtn" class="logout-btn">${T.logoutBtn}</button></div></div>
+                <div class="top-bar"><div class="stats-grid" id="globalStats">
+                    <div class="stat-card" id="totalCard">
+                        <div class="flip-card">
+                            <div class="flip-card-front"><div class="label">${T.totalLabel}</div><div class="number" id="totalCountFront">-</div></div>
+                            <div class="flip-card-back"><div class="label">${T.historicalLabel}</div><div class="number" id="totalCountBack">-</div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="todayCard" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card">
+                            <div class="flip-card-front"><div class="label">${T.todayLabel}</div><div class="number" id="todayCount">-</div></div>
+                            <div class="flip-card-back"><div class="label">${T.tasksLabel}</div><div class="number" id="todayTasks">-</div></div>
+                        </div>
+                    </div>
+                </div><div class="month-selector-inline"><label for="monthSelect">${T.monthLabel}</label><select id="monthSelect"><option>加载中...</option></select></div></div>
+                <div class="filter-bar"><div class="filter-input"><label for="stncodeFilter">📍 站点编码 <span class="live-clock" id="liveClock"></span></label><input type="text" id="stncodeFilter" placeholder="${T.filterPlaceholder}"></div><button id="applyFilterBtn">🔍 查询</button><button id="resetFilterBtn">🔄 重置</button></div>
+                <div class="summary-inline" id="summaryInline">${T.summaryLoading}</div>
+                <div class="table-fixed-header"><div class="thead-container" id="theadContainer"><table id="headerTable"><thead id="tableHead"></thead></table></div><div class="tbody-container" id="tbodyContainer"><table id="dataTable"><tbody id="tableBody"></tbody></table><div class="empty-state" id="emptyMessage" style="display:none;">${T.noData}</div></div></div>
+                <div class="pagination-bar" id="paginationBar"></div><p id="dataError" class="error"></p>`;
+                app.appendChild(dataSec);
+                const thead = document.getElementById('tableHead'); const tr = document.createElement('tr');
+                T.tableHeaders.forEach((h, idx) => { const th = document.createElement('th'); th.textContent=h; th.dataset.colIndex=idx; th.addEventListener('click',()=>sortTable(idx)); tr.appendChild(th); });
+                thead.appendChild(tr);
+                document.getElementById('tbodyContainer').addEventListener('scroll', () => {
+                    document.getElementById('theadContainer').scrollLeft = document.getElementById('tbodyContainer').scrollLeft;
+                });
+                startClock();
+                // 本月评论总数翻转保留原有 JS 控制
+                document.getElementById('totalCard').addEventListener('click', () => {
+                    showHistoricalTotal = !showHistoricalTotal;
+                    document.getElementById('totalCard').classList.toggle('flipped', showHistoricalTotal);
+                });
+                document.getElementById('monthSelect').addEventListener('change', onMonthChange);
+                document.getElementById('applyFilterBtn').addEventListener('click', applyFilter);
+                document.getElementById('resetFilterBtn').addEventListener('click', resetFilter);
+                document.getElementById('stncodeFilter').addEventListener('input', function(e) {
+                    clearTimeout(this._timeout);
+                    this._timeout = setTimeout(() => { applyFilter(); }, 300);
+                });
+            }
+
+            function showLogin() {
+                document.getElementById('loginSection').style.display = 'flex';
+                document.getElementById('dataSection').style.display = 'none';
+                const savedEmail = localStorage.getItem('supabase_saved_email');
+                if (savedEmail) { document.getElementById('email').value = savedEmail; document.getElementById('rememberMe').checked = true; }
+            }
+
+            async function getCurrentUserRole() {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return null;
+                if (user.email === SUPER_ADMIN_EMAIL) return 'super_admin';
+                if (user.user_metadata?.role === 'admin') return 'admin';
+                return 'user';
+            }
+
+            async function showData() {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dataSection').style.display = 'block';
+                currentFilterStncode = ''; document.getElementById('stncodeFilter').value = '';
+                const progress = showProgress('正在加载数据...');
+                try {
+                    await loadAvailableMonths();
+                    if (currentMonth) {
+                        await loadMonthData(false);
+                        await updateTodayTasks();
+                    }
+                    await new Promise(r => setTimeout(r, 200));
+                    progress.finish();
+                } catch (err) {
+                    progress.hide();
+                    const errorMsg = `${escapeHtml(T.loadErrorPrefix + err.message)}`;
+                    document.getElementById('dataError').innerHTML = errorMsg + ' <button class="retry-btn" id="retryLoadBtn">重试</button>';
+                    document.getElementById('retryLoadBtn').addEventListener('click', () => {
+                        document.getElementById('dataError').innerHTML = '';
+                        showData();
+                    });
+                    return;
+                }
+                await updateUIByRole();
+                await updateTitleWithUser();
+            }
+
+            async function updateTitleWithUser() {
+                const { data: { user } } = await supabase.auth.getUser();
+                const titleEl = document.getElementById('pageTitle');
+                if (titleEl && user) {
+                    const emailSpan = titleEl.querySelector('.user-email-in-title');
+                    if (emailSpan) emailSpan.textContent = `(${user.email})`;
+                }
+            }
+
+            async function login() {
+                const btn = document.getElementById('loginBtn'); const errEl = document.getElementById('loginError');
+                const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value;
+                errEl.textContent = '';
+                if (!email || !password) { errEl.textContent = '请输入邮箱和密码'; return; }
+                if (!email.includes('@')) { errEl.textContent = '邮箱格式不正确'; return; }
+                btn.disabled = true; btn.textContent = '验证中...'; showLoading('正在登录...');
+                try {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    if (document.getElementById('rememberMe').checked) localStorage.setItem('supabase_saved_email', email);
+                    else localStorage.removeItem('supabase_saved_email');
+                    hideLoading(); btn.textContent = T.loginBtn; btn.disabled = false;
+                    await showData();
+                } catch (err) {
+                    hideLoading(); errEl.textContent = T.loadErrorPrefix + (err.message || '未知错误');
+                    btn.disabled = false; btn.textContent = T.loginBtn;
+                }
+            }
+
+            async function logout() {
+                await supabase.auth.signOut();
+                showLogin();
+                currentMonth = null;
+                currentFilterStncode = '';
+                currentSort = { col: null, asc: true };
+                currentPage = 1;
+                totalRows = 0;
+                currentPageData = [];
+                cachedAllTimeTotal = null;
+                cachedTodayCount = null;
+                currentMonthAggregates = [];
+            }
+
+            async function updateUIByRole() {
+                const role = await getCurrentUserRole();
+                const isSuperAdmin = (role === 'super_admin');
+                document.getElementById('adminBtn').style.display = isSuperAdmin ? 'inline-block' : 'none';
+                document.getElementById('configBtn').style.display = isSuperAdmin ? 'inline-block' : 'none';
+            }
+
+            // ===== 用户管理面板 =====
+            async function showAdminPanel() {
+                const role = await getCurrentUserRole();
+                if (role !== 'super_admin') { showToast('权限不足'); return; }
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) { showToast('请先登录'); return; }
+                showLoading('正在获取用户列表...');
+                let users = [];
+                try {
+                    const { data, error } = await supabase.functions.invoke('list-users', { method: 'POST' });
+                    if (error) throw new Error(error.message);
+                    users = data.users || [];
+                } catch (err) { hideLoading(); showToast('获取用户列表失败：' + err.message); return; }
+                hideLoading();
+                const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                <div class="modal" style="max-width: 900px;" role="dialog" aria-modal="true">
+                    <span class="close-btn" id="closeAdminPanel" aria-label="关闭">&times;</span>
+                    <h3>用户管理</h3>
+                    <div id="adminPanelMsg" class="error" style="margin-bottom: 10px;"></div>
+                    <div style="margin-bottom: 20px; border: 1px solid var(--glass-border); border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="color: var(--accent); margin:0;">添加管理员</h4>
+                            <button class="btn-primary" id="doAddAdmin" style="margin:0;">创建</button>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="admin-field"><label>邮箱</label><input type="email" id="newAdminEmail" placeholder="admin@example.com"></div>
+                            <div class="admin-field"><label>密码</label><input type="password" id="newAdminPassword" placeholder="至少6位" autocomplete="off"></div>
+                        </div>
+                    </div>
+                    <h4 style="color: var(--neon-blue); margin-bottom: 10px;">用户列表 (${users.length})</h4>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="user-table">
+                            <thead><tr><th>邮箱</th><th>用户ID</th><th>角色</th><th style="text-align: center;">操作</th></tr></thead>
+                            <tbody id="userTableBody">
+                                ${users.map(u => {
+                                    let roleLabel = '普通用户';
+                                    if (u.email === SUPER_ADMIN_EMAIL) roleLabel = '超级管理员';
+                                    else if (u.user_metadata?.role === 'admin') roleLabel = '管理员';
+                                    const isSuperAdminUser = (u.email === SUPER_ADMIN_EMAIL);
+                                    return `<tr>
+                                        <td>${escapeHtml(u.email || '')}</td>
+                                        <td style="font-family: monospace;">${escapeHtml(u.id ? u.id.substring(0,8)+'...' : '')}</td>
+                                        <td>${escapeHtml(roleLabel)}</td>
+                                        <td style="text-align: center;">
+                                            <button class="btn-primary reset-pwd-btn" data-userid="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}">重置密码</button>
+                                            <button class="btn-danger delete-user-btn" data-userid="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" ${isSuperAdminUser ? 'disabled title="不允许删除超级管理员"' : ''}>删除</button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+                document.body.appendChild(overlay);
+                document.getElementById('closeAdminPanel').onclick = () => overlay.remove();
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+                document.getElementById('userTableBody').addEventListener('click', async (e) => {
+                    const target = e.target;
+                    if (target.classList.contains('reset-pwd-btn')) {
+    const userId = target.dataset.userid; 
+    const email = target.dataset.email;
+    // --- 新增暗号保护 ---
+    if (email === SUPER_ADMIN_EMAIL) {
+        const secret = prompt('请输入超级key：');
+        if (secret !== SUPER_ADMIN_SECRET) {
+            showToast('错误，无法修改密码');
+            return;
+        }
+    }
+                        const newPassword = prompt(`为 ${email} 设置新密码（至少6位）：`);
+                        if (!newPassword || newPassword.length < 6) { showToast('密码不能为空且至少6位'); return; }
+                        try {
+                            const { data, error } = await supabase.functions.invoke('reset-user-password', { method: 'POST', body: { userId, newPassword } });
+                            if (error) throw new Error(error.message);
+                            if (data?.success) showToast('密码重置成功！', 'success'); else throw new Error(data?.error || '未知错误');
+                        } catch (err) { showToast('重置失败：' + err.message); }
+                    } else if (target.classList.contains('delete-user-btn')) {
+                        const userId = target.dataset.userid; const email = target.dataset.email;
+                        if (email === SUPER_ADMIN_EMAIL) { showToast('不允许删除超级管理员！'); return; }
+                        if (!confirm(`确定要删除用户 ${email} 吗？此操作不可撤销！`)) return;
+                        try {
+                            const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+                            const result = await res.json();
+                            if (!res.ok) throw new Error(result.error);
+                            showToast('用户已删除', 'success'); overlay.remove(); showAdminPanel();
+                        } catch (err) { showToast('删除失败：' + err.message); }
+                    }
+                });
+                document.getElementById('doAddAdmin').onclick = async () => {
+                    const email = document.getElementById('newAdminEmail').value.trim();
+                    const password = document.getElementById('newAdminPassword').value;
+                    const msgEl = document.getElementById('adminPanelMsg');
+                    if (!email || !password || password.length < 6) { msgEl.textContent = '请输入有效邮箱和至少6位密码'; return; }
+                    try {
+                        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-admin-user`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.error);
+                        showToast('管理员创建成功！', 'success'); overlay.remove(); showAdminPanel();
+                    } catch (err) { msgEl.textContent = '创建失败: ' + err.message; }
+                };
+            }
+
+            async function batchCreateAccounts() {
+                const role = await getCurrentUserRole();
+                if (role !== 'super_admin') { showToast('权限不足'); return; }
+                const btn = document.getElementById('batchCreateInConfigBtn');
+                if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+                showLoading('正在清理无效用户绑定...');
+                try {
+                    const { data: cleanResult, error: cleanError } = await supabase.rpc('clean_orphan_user_ids');
+                    if (cleanError) throw new Error('清理孤儿用户ID失败: ' + cleanError.message);
+                    hideLoading(); showLoading('正在批量生成账号...');
+                    const { data: { session } } = await supabase.auth.getSession(); if (!session) throw new Error('未登录');
+                    const res = await fetch(`${SUPABASE_URL}/functions/v1/batch-create-accounts`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } });
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        const json = await res.json();
+                        if (res.ok) showToast(json.message || '批量生成完成', 'success');
+                        else showToast('错误：' + (json.error || json.message || '未知错误'));
+                    } else if (!res.ok) { const text = await res.text(); showToast('生成失败：' + text); }
+                    else {
+                        const blob = await res.blob(); const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a'); a.href = url; a.download = 'accounts.csv';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                        showToast('批量生成完成，CSV 文件已下载。', 'success');
+                    }
+                } catch (err) { showToast('操作失败：' + err.message); } finally { hideLoading(); if (btn) { btn.disabled = false; btn.textContent = '批量生成账号'; } }
+            }
+
+            function parseFuelMappings(text) { const mappings = []; if (!text) return mappings; const parts = text.split(','); for (let i = 0; i < parts.length; i += 2) { const gcodePart = parts[i]?.trim(); const gnamePart = parts[i+1]?.trim(); if (gcodePart && gnamePart) { const gcode = gcodePart.replace('gcode:', '').trim(); const gname = gnamePart.replace('gname:', '').trim(); if (gcode && gname) mappings.push({ gcode, gname }); } } return mappings; }
+            function serializeFuelMappings(mappings) { return mappings.map(m => `gcode:${m.gcode},gname:${m.gname}`).join(','); }
+
+            class FuelMappingEditor {
+                constructor(container, initialValue = '', enabled = true) { this.container = container; this.enabled = enabled; this._build(initialValue); }
+                _build(initialValue) {
+                    this.container.innerHTML = '';
+                    const presetDiv = document.createElement('div'); presetDiv.style.display = 'flex'; presetDiv.style.gap = '4px'; presetDiv.style.flexWrap = 'nowrap'; presetDiv.style.overflowX = 'auto'; presetDiv.style.marginBottom = '6px';
+                    PRESET_FUELS.forEach(f => {
+                        const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'fuel-preset-btn preset-fuel-btn'; btn.textContent = f.label;
+                        btn.addEventListener('click', () => { if (!this.enabled) return; this._togglePreset(btn, f.gcode, f.gname); });
+                        presetDiv.appendChild(btn); btn._fuelData = { gcode: f.gcode, gname: f.gname };
+                    });
+                    const entriesDiv = document.createElement('div'); entriesDiv.className = 'fuel-entries'; this.entriesDiv = entriesDiv;
+                    this.container.appendChild(presetDiv); this.container.appendChild(entriesDiv);
+                    const mappings = parseFuelMappings(initialValue);
+                    if (mappings.length === 0) mappings.push({ gcode: '', gname: '' });
+                    mappings.forEach(m => this._addEntry(m.gcode, m.gname));
+                    const addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'mode-btn'; addBtn.textContent = '+ 自定义油品'; addBtn.style.marginTop = '8px';
+                    addBtn.addEventListener('click', () => { if (this.enabled) this._addEntry('', ''); });
+                    this.addBtn = addBtn; entriesDiv.appendChild(addBtn); this._syncPresetButtons(); this._applyEnabledState();
+                }
+                _addEntry(gcode, gname) {
+                    const entryDiv = document.createElement('div'); entryDiv.className = 'fuel-mapping-entry';
+                    entryDiv.innerHTML = `<input type="text" placeholder="gcode" value="${escapeHtml(gcode)}" class="fuel-gcode"><input type="text" placeholder="gname" value="${escapeHtml(gname)}" class="fuel-gname"><button type="button" class="btn-remove-fuel">✕</button>`;
+                    entryDiv.querySelector('.btn-remove-fuel').addEventListener('click', () => { entryDiv.remove(); this._syncPresetButtons(); });
+                    this.entriesDiv.insertBefore(entryDiv, this.addBtn); this._syncPresetButtons();
+                }
+                _togglePreset(btn, gcode, gname) {
+                    const existing = Array.from(this.entriesDiv.querySelectorAll('.fuel-gcode')).find(inp => inp.value.trim() === gcode);
+                    if (existing) { existing.closest('.fuel-mapping-entry').remove(); } else { this._addEntry(gcode, gname); }
+                    this._syncPresetButtons();
+                }
+                _syncPresetButtons() {
+                    const existingGcodes = new Set(); this.entriesDiv.querySelectorAll('.fuel-gcode').forEach(inp => { if (inp.value.trim()) existingGcodes.add(inp.value.trim()); });
+                    this.container.querySelectorAll('.preset-fuel-btn').forEach(btn => { if (existingGcodes.has(btn._fuelData.gcode)) { btn.classList.add('selected'); } else { btn.classList.remove('selected'); } });
+                }
+                _applyEnabledState() {
+                    const inputs = this.entriesDiv.querySelectorAll('input'); const removeBtns = this.entriesDiv.querySelectorAll('.btn-remove-fuel'); const presetBtns = this.container.querySelectorAll('.preset-fuel-btn');
+                    inputs.forEach(inp => { inp.readOnly = !this.enabled; }); removeBtns.forEach(btn => { btn.disabled = !this.enabled; btn.style.opacity = this.enabled ? '1' : '0.5'; });
+                    presetBtns.forEach(btn => { btn.style.pointerEvents = this.enabled ? 'auto' : 'none'; btn.style.opacity = this.enabled ? '1' : '0.5'; });
+                    this.addBtn.style.display = this.enabled ? 'inline-flex' : 'none';
+                }
+                setEnabled(enabled) { this.enabled = enabled; this._applyEnabledState(); }
+                getMappings() { const mappings = []; this.entriesDiv.querySelectorAll('.fuel-mapping-entry').forEach(entry => { const gcode = entry.querySelector('.fuel-gcode').value.trim(); const gname = entry.querySelector('.fuel-gname').value.trim(); if (gcode && gname) mappings.push({ gcode, gname }); }); return mappings; }
+            }
+
+            class CardnoEditor {
+                constructor(container, initialValue = '', enabled = true) { this.container = container; this.enabled = enabled; this._build(initialValue); }
+                _build(initialValue) {
+                    this.container.innerHTML = ''; const entriesDiv = document.createElement('div'); entriesDiv.className = 'cardno-entries'; this.entriesDiv = entriesDiv; this.container.appendChild(entriesDiv);
+                    const cards = initialValue ? initialValue.split(',').map(s => s.trim()).filter(Boolean) : []; if (cards.length === 0) for (let i = 0; i < 4; i++) cards.push('');
+                    cards.forEach(card => this._addEntry(card));
+                    const addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'mode-btn'; addBtn.textContent = '+ 添加卡号'; addBtn.style.marginTop = '8px';
+                    addBtn.addEventListener('click', () => { if (this.enabled) this._addEntry(''); });
+                    this.addBtn = addBtn; entriesDiv.appendChild(addBtn); this._applyEnabledState();
+                }
+                _addEntry(value) {
+                    const entryDiv = document.createElement('div'); entryDiv.className = 'cardno-entry';
+                    entryDiv.innerHTML = `<input type="text" placeholder="卡号" value="${escapeHtml(value)}" class="cardno-input"><button type="button" class="btn-remove-cardno">✕</button>`;
+                    entryDiv.querySelector('.btn-remove-cardno').addEventListener('click', () => entryDiv.remove());
+                    this.entriesDiv.insertBefore(entryDiv, this.addBtn);
+                }
+                _applyEnabledState() {
+                    const inputs = this.entriesDiv.querySelectorAll('input'); const removeBtns = this.entriesDiv.querySelectorAll('.btn-remove-cardno');
+                    inputs.forEach(inp => { inp.readOnly = !this.enabled; }); removeBtns.forEach(btn => { btn.disabled = !this.enabled; btn.style.opacity = this.enabled ? '1' : '0.5'; });
+                    this.addBtn.style.display = this.enabled ? 'inline-flex' : 'none';
+                }
+                setEnabled(enabled) { this.enabled = enabled; this._applyEnabledState(); }
+                getCards() { return Array.from(this.entriesDiv.querySelectorAll('.cardno-input')).map(inp => inp.value.trim()).filter(Boolean); }
+            }
+
+            let stationsList = [], currentEditStationId = null;
+            let fuelLocked = true, cardnoLocked = true;
+
+            async function showStationConfig() {
+                const role = await getCurrentUserRole();
+                if (role !== 'super_admin') { showToast('权限不足'); return; }
+                const { data: { session } } = await supabase.auth.getSession(); if (!session) { showToast('请先登录'); return; }
+                showLoading('正在加载站点列表...');
+                try {
+                    const { data, error } = await supabase.from('stations').select('id, stncode, shortname, startdate, enddate');
+                    if (error) throw error;
+                    stationsList = data || [];
+                } catch (err) { hideLoading(); showToast('加载站点列表失败: ' + err.message); return; }
+                hideLoading();
+                const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                <div class="modal" role="dialog" aria-modal="true">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin:0;">站点数据配置</h3>
+                        <div><button id="batchCreateInConfigBtn" class="btn-primary" style="margin-right:10px;">批量生成账号</button><span class="close-btn" id="closeConfigModal" aria-label="关闭">&times;</span></div>
+                    </div>
+                    <div class="mode-switch"><div id="tabEdit" class="mode-btn active">编辑站点</div><div id="tabCreate" class="mode-btn">新增站点</div><div id="tabBatch" class="mode-btn">批量启用/禁用</div></div>
+                    <div id="panelEdit" class="panel active">
+                        <div class="field-row"><label for="stationSelect">选择站点：</label><select id="stationSelect"><option value="">-- 请选择站点 --</option>${stationsList.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.stncode)} - ${escapeHtml(s.shortname)}</option>`).join('')}</select></div>
+                        <div class="field-row"><label>交易组织代码</label><input type="text" id="transactionorgcode"></div>
+                        <div class="field-group"><div class="field-row"><label>已用次数</label><input type="number" id="usedcount"></div><div class="field-row"><label>每日次数</label><input type="number" id="count"></div></div>
+                        <div class="field-group"><div class="field-row"><label>开始日期</label><input type="date" id="startdate"></div><div class="field-row"><label>结束日期</label><input type="date" id="enddate"></div></div>
+                        <div class="field-row"><label>最后重置日期</label><input type="date" id="lastresetdate"></div>
+                        <div class="field-row"><label>关联用户ID</label><input type="text" id="user_id" placeholder="UUID"></div>
+                        <div class="fuel-section"><label>油品映射 <span class="lock-icon" id="lockFuelEdit" title="锁定/解锁编辑">🔒</span></label><div class="fuel-editor-container" id="editFuelMappingEditor"></div></div>
+                        <div class="cardno-section"><label>卡号数组 <span class="lock-icon" id="lockCardnoEdit" title="锁定/解锁编辑">🔒</span></label><div class="cardno-editor-container" id="editCardnoEditor"></div></div>
+                        <div class="edit-create-footer"><button id="deleteStationBtn" class="btn-danger" style="display:none;">🗑️ 删除站点</button><button id="saveEditBtn" class="btn-primary">保存配置</button><button id="cancelConfigBtn" class="btn-danger">取消</button></div>
+                    </div>
+                    <div id="panelCreate" class="panel">
+                        <div class="field-row"><label for="newStncode">站点编码</label><input type="text" id="newStncode" placeholder="例如 33300011"></div>
+                        <div class="field-row"><label for="newShortname">站点简称</label><input type="text" id="newShortname" placeholder="中国石化新站点"></div>
+                        <div class="field-row"><label>交易组织代码</label><input type="text" id="newTransactionorgcode"></div>
+                        <div class="field-group"><div class="field-row"><label>已用次数</label><input type="number" id="newUsedcount"></div><div class="field-row"><label>每日次数</label><input type="number" id="newCount"></div></div>
+                        <div class="field-group"><div class="field-row"><label>开始日期</label><input type="date" id="newStartdate"></div><div class="field-row"><label>结束日期</label><input type="date" id="newEnddate"></div></div>
+                        <div class="fuel-section"><label>油品映射</label><div class="fuel-editor-container" id="fuelMappingEditor"></div></div>
+                        <div class="cardno-section"><label>卡号数组</label><div class="cardno-editor-container" id="newCardnoEditor"></div></div>
+                        <div class="edit-create-footer"><button id="saveCreateBtn" class="btn-primary">保存配置</button><button id="cancelConfigBtn2" class="btn-danger">取消</button></div>
+                    </div>
+                    <div id="panelBatch" class="panel">
+                        <div class="batch-section">
+                            <div class="batch-controls"><button id="enableAllBtn" class="btn-success">✅ 全部启用</button><button id="disableAllBtn" class="btn-danger">⛔ 全部禁用</button><button id="enableSelectedBtn" class="btn-primary">✔️ 启用选中</button><button id="disableSelectedBtn" class="btn-primary">❌ 禁用选中</button></div>
+                            <div class="date-range-panel"><div class="date-input"><label for="customStartDate">开始日期</label><input type="date" id="customStartDate"></div><div class="date-input"><label for="customEndDate">结束日期</label><input type="date" id="customEndDate"></div></div>
+                            <div class="station-list" id="stationChecklist">${stationsList.map(s => { const today = getLocalDateString(); const start = s.startdate ? s.startdate.slice(0,10) : ''; const end = s.enddate ? s.enddate.slice(0,10) : ''; const isEnabled = (start <= today && today <= end); return `<div class="station-item"><input type="checkbox" value="${escapeHtml(s.id)}" id="chk_${escapeHtml(s.id)}"><label for="chk_${escapeHtml(s.id)}">${escapeHtml(s.stncode)} - ${escapeHtml(s.shortname)} (区间: ${escapeHtml(start||'无')} ~ ${escapeHtml(end||'无')}) ${isEnabled ? '✅启用中' : '❌已禁用'}</label></div>`; }).join('')}</div>
+                            <div class="batch-action-buttons"><button id="applyDateToSelected" class="btn-primary">📅 应用到选中</button><button id="applyDateToAll" class="btn-primary">📅 应用到全部</button><button id="cancelBatchBtn" class="btn-danger">取消</button></div>
+                        </div>
+                    </div>
+                    <p id="configMsg" class="error"></p></div>`;
+                document.body.appendChild(overlay);
+                document.getElementById('batchCreateInConfigBtn').addEventListener('click', batchCreateAccounts);
+                const closeModal = () => overlay.remove();
+                document.getElementById('closeConfigModal').onclick = closeModal;
+                document.getElementById('cancelConfigBtn').onclick = closeModal;
+                document.getElementById('cancelConfigBtn2').onclick = closeModal;
+                document.getElementById('cancelBatchBtn').onclick = closeModal;
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+                const tabEdit = document.getElementById('tabEdit'), tabCreate = document.getElementById('tabCreate'), tabBatch = document.getElementById('tabBatch');
+                const panelEdit = document.getElementById('panelEdit'), panelCreate = document.getElementById('panelCreate'), panelBatch = document.getElementById('panelBatch');
+                function setActiveTab(active) {
+                    [tabEdit,tabCreate,tabBatch].forEach(t => t.classList.remove('active'));
+                    [panelEdit,panelCreate,panelBatch].forEach(p => p.classList.remove('active'));
+                    if (active === 'edit') { tabEdit.classList.add('active'); panelEdit.classList.add('active'); }
+                    else if (active === 'create') { tabCreate.classList.add('active'); panelCreate.classList.add('active'); }
+                    else { tabBatch.classList.add('active'); panelBatch.classList.add('active'); }
+                }
+                tabEdit.onclick = () => setActiveTab('edit');
+                tabCreate.onclick = () => setActiveTab('create');
+                tabBatch.onclick = () => setActiveTab('batch');
+                const fuelEditor = new FuelMappingEditor(document.getElementById('fuelMappingEditor'), "gcode:60518727,gname:95号车用汽油(ⅥB),gcode:60518726,gname:92号车用汽油(ⅥB),gcode:60514943,gname:0号车用柴油(VI)", true);
+                const newCardnoEditor = new CardnoEditor(document.getElementById('newCardnoEditor'), "1000419000000071231,1000419000000064385,1000419000000066590,1000419000000069220", true);
+                let editFuelEditor = null, editCardnoEditor = null;
+                document.getElementById('lockFuelEdit').addEventListener('click', () => {
+                    fuelLocked = !fuelLocked; document.getElementById('lockFuelEdit').textContent = fuelLocked ? '🔒' : '🔓';
+                    if (editFuelEditor) editFuelEditor.setEnabled(!fuelLocked);
+                });
+                document.getElementById('lockCardnoEdit').addEventListener('click', () => {
+                    cardnoLocked = !cardnoLocked; document.getElementById('lockCardnoEdit').textContent = cardnoLocked ? '🔒' : '🔓';
+                    if (editCardnoEditor) editCardnoEditor.setEnabled(!cardnoLocked);
+                });
+                async function loadStationForEdit(stationId) {
+                    if (!stationId) { document.getElementById('deleteStationBtn').style.display = 'none'; return; }
+                    try {
+                        const { data, error } = await supabase.from('stations').select('*').eq('id', stationId).single();
+                        if (error) throw error;
+                        if (data) {
+                            document.getElementById('transactionorgcode').value = data.transactionorgcode || '';
+                            document.getElementById('usedcount').value = data.usedcount ?? '';
+                            document.getElementById('count').value = data.count ?? '';
+                            document.getElementById('startdate').value = data.startdate ? data.startdate.slice(0,10) : '';
+                            document.getElementById('enddate').value = data.enddate ? data.enddate.slice(0,10) : '';
+                            document.getElementById('lastresetdate').value = data.lastresetdate ? data.lastresetdate.slice(0,10) : '';
+                            document.getElementById('user_id').value = data.user_id || '';
+                            editFuelEditor = new FuelMappingEditor(document.getElementById('editFuelMappingEditor'), data.fuelmappings || '', !fuelLocked);
+                            editCardnoEditor = new CardnoEditor(document.getElementById('editCardnoEditor'), data.cardnoarray || '', !cardnoLocked);
+                            document.getElementById('deleteStationBtn').style.display = 'inline-block';
+                        }
+                    } catch (err) { document.getElementById('configMsg').textContent = '加载站点数据失败: ' + err.message; }
+                }
+                document.getElementById('stationSelect').addEventListener('change', (e) => {
+                    currentEditStationId = e.target.value;
+                    if (currentEditStationId) loadStationForEdit(currentEditStationId);
+                    else {
+                        document.getElementById('deleteStationBtn').style.display = 'none';
+                        ['transactionorgcode','usedcount','count','startdate','enddate','lastresetdate','user_id'].forEach(id => document.getElementById(id).value = '');
+                        document.getElementById('editFuelMappingEditor').innerHTML = ''; document.getElementById('editCardnoEditor').innerHTML = '';
+                    }
+                });
+                document.getElementById('saveEditBtn').onclick = async () => {
+                    const msg = document.getElementById('configMsg'); msg.textContent = '';
+                    const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
+                    if (!currentEditStationId) { msg.textContent = '请选择站点'; return; }
+                    const config = {
+                        transactionorgcode: document.getElementById('transactionorgcode').value,
+                        usedcount: parseInt(document.getElementById('usedcount').value) || null,
+                        count: parseInt(document.getElementById('count').value) || null,
+                        startdate: document.getElementById('startdate').value || null,
+                        enddate: document.getElementById('enddate').value || null,
+                        lastresetdate: document.getElementById('lastresetdate').value || null,
+                        user_id: document.getElementById('user_id').value,
+                        fuelmappings: serializeFuelMappings(editFuelEditor.getMappings()),
+                        cardnoarray: editCardnoEditor.getCards().join(',')
+                    };
+                    try {
+                        const res = await fetch(`${SUPABASE_URL}/functions/v1/update-station-config`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stationId: currentEditStationId, config }) });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.error);
+                        showToast('更新成功', 'success');
+                        updateTodayTasks().catch(e => console.error(e));
+                        closeModal();
+                    } catch (err) { msg.textContent = '保存失败: ' + err.message; }
+                };
+                document.getElementById('saveCreateBtn').onclick = async () => {
+                    const msg = document.getElementById('configMsg'); msg.textContent = '';
+                    const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
+                    const stncode = document.getElementById('newStncode').value.trim();
+                    const shortname = document.getElementById('newShortname').value.trim();
+                    if (!stncode || !shortname) { msg.textContent = '站点编码和简称为必填'; return; }
+                    const newStation = {
+                        stncode, shortname,
+                        transactionorgcode: document.getElementById('newTransactionorgcode').value,
+                        usedcount: parseInt(document.getElementById('newUsedcount').value) || null,
+                        count: parseInt(document.getElementById('newCount').value) || null,
+                        startdate: document.getElementById('newStartdate').value || null,
+                        enddate: document.getElementById('newEnddate').value || null,
+                        fuelmappings: serializeFuelMappings(fuelEditor.getMappings()),
+                        cardnoarray: newCardnoEditor.getCards().join(',')
+                    };
+                    try {
+                        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-station`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(newStation) });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.error);
+                        showToast('新增成功', 'success');
+                        updateTodayTasks().catch(e => console.error(e));
+                        closeModal();
+                    } catch (err) { msg.textContent = '新增失败: ' + err.message; }
+                };
+                document.getElementById('deleteStationBtn').onclick = async () => {
+                    if (!currentEditStationId) return;
+                    if (!confirm('确定删除该站点？此操作不可撤销！')) return;
+                    try {
+                        const { error } = await supabase.from('stations').delete().eq('id', currentEditStationId);
+                        if (error) throw error;
+                        showToast('站点已删除', 'success');
+                        updateTodayTasks().catch(e => console.error(e));
+                        closeModal();
+                    } catch (err) { document.getElementById('configMsg').textContent = '删除失败: ' + err.message; }
+                };
+                async function updateStationsDates(stationIds, startdate, enddate) {
+                    if (!stationIds.length) { showToast('没有选中任何站点'); return; }
+                    const { data: { session } } = await supabase.auth.getSession(); if (!session) return;
+                    try {
+                        const res = await fetch(`${SUPABASE_URL}/functions/v1/update-stations-dates`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stationIds, startdate, enddate }) });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.error);
+                        showToast(`成功更新 ${result.updatedCount} 个站点`, 'success');
+                        await refreshStationList();
+                        updateTodayTasks().catch(e => console.error(e));
+                    } catch (err) { showToast('批量更新失败: ' + err.message); }
+                }
+                function getSelectedIds() { return Array.from(document.querySelectorAll('#stationChecklist input[type="checkbox"]:checked')).map(cb => cb.value); }
+                async function refreshStationList() {
+                    const { data, error } = await supabase.from('stations').select('id, stncode, shortname, startdate, enddate');
+                    if (!error && data) {
+                        stationsList = data; const container = document.getElementById('stationChecklist');
+                        const today = getLocalDateString();
+                        container.innerHTML = stationsList.map(s => {
+                            const start = s.startdate ? s.startdate.slice(0,10) : ''; const end = s.enddate ? s.enddate.slice(0,10) : '';
+                            const isEnabled = (start <= today && today <= end);
+                            return `<div class="station-item"><input type="checkbox" value="${escapeHtml(s.id)}" id="chk_${escapeHtml(s.id)}"><label for="chk_${escapeHtml(s.id)}">${escapeHtml(s.stncode)} - ${escapeHtml(s.shortname)} (区间: ${escapeHtml(start||'无')} ~ ${escapeHtml(end||'无')}) ${isEnabled ? '✅启用中' : '❌已禁用'}</label></div>`;
+                        }).join('');
+                    }
+                }
+                const todayStr = getLocalDateString(), farFuture = '2099-12-31';
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1); const yesterdayStr = yesterday.toISOString().slice(0,10);
+                document.getElementById('enableAllBtn').onclick = () => { if (!confirm('⚠️ 确定要启用全部站点吗？')) return; updateStationsDates(stationsList.map(s => s.id), todayStr, farFuture); };
+                document.getElementById('disableAllBtn').onclick = () => { if (!confirm('⚠️ 确定要禁用全部站点吗？这可能导致服务不可用！')) return; updateStationsDates(stationsList.map(s => s.id), null, yesterdayStr); };
+                document.getElementById('enableSelectedBtn').onclick = () => { const ids = getSelectedIds(); if (!ids.length) showToast('请先勾选'); else { if (!confirm('⚠️ 确定要启用选中的站点吗？')) return; updateStationsDates(ids, todayStr, farFuture); } };
+                document.getElementById('disableSelectedBtn').onclick = () => { const ids = getSelectedIds(); if (!ids.length) showToast('请先勾选'); else { if (!confirm('⚠️ 确定要禁用选中的站点吗？')) return; updateStationsDates(ids, null, yesterdayStr); } };
+                document.getElementById('applyDateToSelected').onclick = () => { const start = document.getElementById('customStartDate').value, end = document.getElementById('customEndDate').value; if (!start || !end) showToast('请填写完整日期'); else { const ids = getSelectedIds(); if (!ids.length) showToast('请先勾选站点'); else updateStationsDates(ids, start, end); } };
+                document.getElementById('applyDateToAll').onclick = () => { const start = document.getElementById('customStartDate').value, end = document.getElementById('customEndDate').value; if (!start || !end) showToast('请填写完整日期'); else updateStationsDates(stationsList.map(s => s.id), start, end); };
+            }
+
+            function bindEvents() {
+                document.getElementById('loginBtn').addEventListener('click', login);
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+                document.getElementById('togglePwd').addEventListener('click', () => {
+                    const pwd = document.getElementById('password'), btn = document.getElementById('togglePwd');
+                    if (pwd.type === 'password') { pwd.type = 'text'; btn.innerHTML = '🙈'; }
+                    else { pwd.type = 'password'; btn.innerHTML = '👁️'; }
+                });
+                document.getElementById('adminBtn').addEventListener('click', showAdminPanel);
+                document.getElementById('configBtn').addEventListener('click', showStationConfig);
+                document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') { const loginBtn = document.getElementById('loginBtn'); if (loginBtn && !loginBtn.disabled) login(); } });
+            }
+
+            buildUI();
+            bindEvents();
+            (async function init() { const { data: { session } } = await supabase.auth.getSession(); if (session) await showData(); else showLogin(); })();
+        })();
+    </script>
+</body>
+</html>
