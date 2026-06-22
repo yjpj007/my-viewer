@@ -724,4 +724,11 @@ td {
     .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 24px; height: 24px; font-size: 0.8rem; }
     .admin-field label { width: 50px; font-size: 0.7rem; }
     .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
+
+    /* 修复移动端按钮文字颜色过亮问题 */
+    .filter-bar button,
+    .modal .btn-primary,
+    .modal .btn-success {
+        color: #0a0a0f;
+    }
 }
