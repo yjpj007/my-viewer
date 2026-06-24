@@ -531,13 +531,13 @@
             clearTimeout(this._timeout);
             const self = this;
             this._timeout = setTimeout(() => {
-            const val = self.value.trim();
-            // 只有输入为空（重置）或长度为8位时，才触发查询
-            if (val.length === 0 || val.length === 8) {
-                applyFilter();
-            }
-        }, 300);
-    });
+                const val = self.value.trim();
+                // 严格按照要求：只有输入恰好为8位数字才触发查询
+                if (val.length === 8) {
+                    applyFilter();
+                }
+            }, 300);
+        });
 
     const showLogin = () => {
         getEl('loginSection').style.display = 'flex';
