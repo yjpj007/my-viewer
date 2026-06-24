@@ -538,7 +538,7 @@
                 }
             }, 300);
         });
-
+    };
     const showLogin = () => {
         getEl('loginSection').style.display = 'flex';
         getEl('dataSection').style.display = 'none';
