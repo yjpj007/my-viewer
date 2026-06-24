@@ -668,6 +668,7 @@ td {
 .lock-icon { cursor: pointer; font-size: 1.2rem; margin-left: 4px; user-select: none; }
 
 /* 移动端适配 */
+/* 移动端适配 */
 @media (max-width: 768px) {
     #app { padding: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .login-box { padding: 30px 18px 28px; border-radius: 18px; width: 94vw; }
@@ -725,10 +726,52 @@ td {
     .admin-field label { width: 50px; font-size: 0.7rem; }
     .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
 
-    /* 修复移动端按钮文字颜色过亮问题 */
-    .filter-bar button,
-    .modal .btn-primary,
-    .modal .btn-success {
-        color: #0a0a0f;
+    /* ================= 新增修复：移动端按钮字体异常 ================= */
+    /* 重置所有按钮的外观，避免默认样式干扰 */
+    button {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+
+    /* 强制修正筛选按钮（查询/重置）的文字颜色（保持黑色） */
+    .filter-bar button {
+        color: #0a0a0f !important;
+        text-shadow: none !important;
+    }
+
+    /* 修正主要操作按钮（黑色文字） */
+    .btn-primary,
+    .btn-success,
+    .mode-btn.active,
+    .fuel-preset-btn {
+        color: #0a0a0f !important;
+        text-shadow: none !important;
+    }
+
+    /* 危险按钮（删除、取消等）保持白色 */
+    .btn-danger {
+        color: #ffffff !important;
+        text-shadow: none !important;
+    }
+
+    /* 确保点击/聚焦状态颜色不变（防止移动端高亮变白） */
+    .filter-bar button:active,
+    .filter-bar button:focus,
+    .btn-primary:active,
+    .btn-primary:focus,
+    .btn-success:active,
+    .btn-success:focus,
+    .mode-btn.active:active,
+    .mode-btn.active:focus,
+    .fuel-preset-btn:active,
+    .fuel-preset-btn:focus {
+        color: #0a0a0f !important;
+        text-shadow: none !important;
+    }
+
+    /* 登录按钮（本身设计为白色）保持原样 */
+    .login-box button[type="button"].login-submit-btn {
+        color: #ffffff !important;
+        text-shadow: none !important;
     }
 }
