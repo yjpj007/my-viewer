@@ -529,9 +529,15 @@
         getEl('resetFilterBtn').addEventListener('click', resetFilter);
         getEl('stncodeFilter').addEventListener('input', function(e) {
             clearTimeout(this._timeout);
-            this._timeout = setTimeout(applyFilter, 300);
-        });
-    };
+            const self = this;
+            this._timeout = setTimeout(() => {
+            const val = self.value.trim();
+            // 只有输入为空（重置）或长度为8位时，才触发查询
+            if (val.length === 0 || val.length === 8) {
+                applyFilter();
+            }
+        }, 300);
+    });
 
     const showLogin = () => {
         getEl('loginSection').style.display = 'flex';
