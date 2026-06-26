@@ -1,3 +1,49 @@
+// ==================== 高级反调试与防F12（平稳版） ====================
+(function() {
+    // 1. 防右键菜单
+    document.oncontextmenu = function(e) {
+        e.preventDefault();
+        return false;
+    };
+
+    // 2. 拦截 F12, Ctrl+Shift+I, Ctrl+U
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+            (e.ctrlKey && e.key === 'u')) {
+            e.preventDefault();
+            window.location.href = 'about:blank'; // 触发强制跳转
+        }
+    });
+
+    // 3. 检测窗口尺寸差异 (防 dock 模式打开控制台)
+    var widthThreshold = 160;
+    var heightThreshold = 160;
+    function detectDevTools() {
+        var widthDiff = window.outerWidth - window.innerWidth;
+        var heightDiff = window.outerHeight - window.innerHeight;
+        if (widthDiff > widthThreshold || heightDiff > heightThreshold) {
+            window.location.href = 'about:blank';
+        }
+    }
+    setInterval(detectDevTools, 1000);
+
+    // 4. 劫持 Console (暂时注释，防止某些浏览器报错导致白屏)
+    // var originalConsoleLog = console.log;
+    // console.log = function() { /* 静默拦截 */ };
+    // console.warn = function() { /* 静默拦截 */ };
+    // console.error = function() { /* 静默拦截 */ };
+
+    // 5. 无限 Debugger 陷阱 (⚠️ 已注释，由于它会导致JS立即崩溃，从而让页面白屏。恢复正常后再调试此功能)
+    // (function boobytrap() {
+    //     (function() {
+    //         return false;
+    //     }).constructor('debugger')();
+    //     setTimeout(boobytrap, 3000);
+    // })();
+})();
+// ==================== 调试结束 ====================
+
 (function() {
     // -------------------- 缓存常用DOM元素 --------------------
     const particleCanvas = document.getElementById('particleCanvas');
@@ -91,7 +137,7 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const SUPER_ADMIN_EMAIL = "liuping@vip.com";
     const PAGE_SIZE = 50;
-    const SUPER_ADMIN_SECRET = '413335259';
+    // 密钥已安全移除，现由 Supabase 环境变量（Secrets）安全保管！
 
     // -------------------- 全局状态与缓存元素 --------------------
     let currentStartDate = getLocalDateString();
@@ -370,7 +416,6 @@
         const tbody = getEl('tableBody'), emptyMsg = getEl('emptyMessage');
         tbody.innerHTML = '';
         
-        // 【核心修正】每次渲染前，强制为 dataTable 重新注入 colgroup 列宽控制
         const dataTable = getEl('dataTable');
         let colgroup = dataTable.querySelector('colgroup');
         if (!colgroup) {
@@ -517,7 +562,6 @@
         <div class="pagination-bar" id="paginationBar"></div><p id="dataError" class="error"></p>`;
         app.appendChild(dataSec);
 
-        // 添加计算器悬浮弹窗
         const calcPopup = document.createElement('div');
         calcPopup.id = 'calcPopup';
         calcPopup.className = 'calc-popup';
@@ -556,7 +600,6 @@
         `;
         app.appendChild(calcPopup);
 
-        // 【核心修正】给表头添加 colgroup 强制列宽，彻底根治表头和表体对不齐的故障
         const headerTable = getEl('headerTable');
         const colgroupHeader = document.createElement('colgroup');
         colgroupHeader.innerHTML = `
@@ -892,25 +935,49 @@
             await showPermissionConfig(userId, email, session.access_token);
         });
 
+        // ===== 核心重置密码逻辑（已修复） =====
         document.getElementById('userTableBody').addEventListener('click', async (e) => {
             const target = e.target;
             if (target.classList.contains('reset-pwd-btn')) {
                 const userId = target.dataset.userid; 
                 const email = target.dataset.email;
-                if (email === SUPER_ADMIN_EMAIL) {
-                    const secret = prompt('请输入超级管理员密钥（二次确认）：');
-                    if (secret !== SUPER_ADMIN_SECRET) {
-                        showToast('密钥错误，重置密码取消');
-                        return;
-                    }
-                }
+                
+                // 1. 先获取新密码（放在最前面，防止变量未定义报错）
                 const newPassword = prompt(`为 ${email} 设置新密码（至少6位）：`);
-                if (!newPassword || newPassword.length < 6) { showToast('密码不能为空且至少6位'); return; }
+                if (!newPassword || newPassword.length < 6) { 
+                    showToast('密码不能为空且至少6位'); 
+                    return; 
+                }
+
+                // 2. 判断是否超级管理员，决定是否加入二次验证参数
                 try {
-                    const { data, error } = await supabase.functions.invoke('reset-user-password', { method: 'POST', body: { userId, newPassword } });
+                    let requestBody = { userId, newPassword };
+                    if (email === SUPER_ADMIN_EMAIL) {
+    		const secret = prompt('请输入超级管理员密钥（二次确认）：');
+   		 if (secret === null) return; // 用户取消
+   		 const trimmedSecret = secret.trim(); // 核心修复：去除前后空格
+   		if (trimmedSecret === '') {
+       		showToast('密钥不能为空');
+        		return;
+   		 }
+   		 requestBody.secret = trimmedSecret; // 把去空格后的密钥传给后端
+	}
+                    
+                    // 3. 统一发送请求
+                    const { data, error } = await supabase.functions.invoke('reset-user-password', { 
+                        method: 'POST', 
+                        body: requestBody
+                    });
+                    
                     if (error) throw new Error(error.message);
-                    if (data?.success) showToast('密码重置成功！', 'success'); else throw new Error(data?.error || '未知错误');
-                } catch (err) { showToast('重置失败：' + err.message); }
+                    if (data?.success) {
+                        showToast('密码重置成功！', 'success'); 
+                    } else {
+                        throw new Error(data?.error || '未知错误');
+                    }
+                } catch (err) { 
+                    showToast('重置失败：' + err.message); 
+                }
             } else if (target.classList.contains('delete-user-btn')) {
                 const userId = target.dataset.userid; const email = target.dataset.email;
                 if (email === SUPER_ADMIN_EMAIL) { showToast('不允许删除超级管理员！'); return; }
