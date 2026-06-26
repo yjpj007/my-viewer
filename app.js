@@ -509,6 +509,7 @@
             <div class="field-row"><label>每日数量</label><input type="number" id="calcDaily" value="300" min="0"></div>
             <div class="field-row"><label>开始日期</label><input type="date" id="calcStart"></div>
             <div class="field-row"><label>持续天数</label><input type="number" id="calcDays" value="5" min="0"></div>
+            <div class="field-row"><label>本月已评数</label><input type="number" id="calcUsed" value="0" min="0"></div>
 
             <div class="calc-results-area">
                 <div class="calc-result-end-row">
@@ -588,6 +589,7 @@
         const calcDaily = getEl('calcDaily');
         const calcStart = getEl('calcStart');
         const calcDays = getEl('calcDays');
+        const calcUsed = getEl('calcUsed');
         const calcEnd = getEl('calcEnd');
         const calcTotal = getEl('calcTotal');
         const calcFeeFull = getEl('calcFeeFull');
@@ -624,29 +626,30 @@
             const daily = parseInt(calcDaily.value) || 0;
             const startVal = calcStart.value;
             const days = parseInt(calcDays.value) || 0;
+            const used = parseInt(calcUsed.value) || 0;
 
             if (daily > 0 && startVal && days > 0) {
-                // 1. 计算结束日期 - 【核心修复：包含开始日期，减 1 天】
+                // 1. 计算结束日期（包含开始日期，减 1 天）
                 const startDate = new Date(startVal + 'T00:00:00');
                 startDate.setDate(startDate.getDate() + days - 1);
                 const endStr = startDate.getFullYear() + '-' + String(startDate.getMonth() + 1).padStart(2, '0') + '-' + String(startDate.getDate()).padStart(2, '0');
                 calcEnd.textContent = endStr;
 
-                // 2. 总数量
+                // 2. 总数量（本次新增）
                 const total = daily * days;
                 calcTotal.textContent = total;
 
-                // 3. 预计费用：全价 0.5
+                // 3. 预计费用：全价 0.5（不受历史数量影响）
                 const feeFull = total * 0.5;
                 calcFeeFull.textContent = feeFull.toFixed(2) + ' 元';
 
-                // 4. 实际费用：阶梯价（前1000个0.5，超出部分0.2）
-                let feeActual = 0;
-                if (total <= 1000) {
-                    feeActual = total * 0.5;
-                } else {
-                    feeActual = 1000 * 0.5 + (total - 1000) * 0.2;
-                }
+                // 4. 实际费用：阶梯价（前1000个0.5，超出部分0.2，包含本月已评数）
+                // 计算本次新增中，有多少个能享受 0.5 的单价
+                const remainingHalfPrice = Math.max(0, 1000 - used);
+                const currentBatchHalf = Math.min(remainingHalfPrice, total);
+                const currentBatchDiscount = total - currentBatchHalf;
+                
+                const feeActual = currentBatchHalf * 0.5 + currentBatchDiscount * 0.2;
                 calcFeeActual.textContent = feeActual.toFixed(2) + ' 元';
             } else {
                 calcEnd.textContent = '-';
@@ -659,6 +662,7 @@
         calcDaily.addEventListener('input', updateCalculation);
         calcStart.addEventListener('input', updateCalculation);
         calcDays.addEventListener('input', updateCalculation);
+        calcUsed.addEventListener('input', updateCalculation);
 
         // 初始化
         calcStart.value = getLocalDateString();
@@ -1439,7 +1443,7 @@
                 }).join('');
             }
         }
-        const todayStr = getLocalDateString(), farFuture = '2027-12-31';
+        const todayStr = getLocalDateString(), farFuture = '2099-12-31';
         const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1); const yesterdayStr = getLocalDateString(yesterday);
         document.getElementById('enableAllBtn').addEventListener('click', () => { if (!confirm('⚠️ 确定要启用全部站点吗？')) return; updateStationsDates(stationsList.map(s => s.id), todayStr, farFuture); });
         document.getElementById('disableAllBtn').addEventListener('click', () => { if (!confirm('⚠️ 确定要禁用全部站点吗？这可能导致服务不可用！')) return; updateStationsDates(stationsList.map(s => s.id), null, yesterdayStr); });
