@@ -1,25 +1,46 @@
-// ==================== 高级反调试与防F12（平稳版） ====================
+// =======================================
 (function() {
-    // 1. 防右键菜单
+    
     document.oncontextmenu = function(e) {
         e.preventDefault();
         return false;
     };
 
-    // 2. 拦截 F12, Ctrl+Shift+I, Ctrl+U
+    
     document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && e.key === 'I') || 
             (e.ctrlKey && e.key === 'u')) {
             e.preventDefault();
-            window.location.href = 'about:blank'; // 触发强制跳转
+            window.location.href = 'about:blank';
         }
     });
 
-    // 3. 检测窗口尺寸差异 (防 dock 模式打开控制台)
+    
     var widthThreshold = 160;
     var heightThreshold = 160;
+    var isInputActive = false;
+
+    
+    document.addEventListener('focusin', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            isInputActive = true;
+        }
+    });
+    document.addEventListener('focusout', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            isInputActive = false;
+        }
+    });
+
+    
+    function isMobileDevice() {
+        return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
     function detectDevTools() {
+        if (isInputActive) return;          
+        if (isMobileDevice()) return;       
         var widthDiff = window.outerWidth - window.innerWidth;
         var heightDiff = window.outerHeight - window.innerHeight;
         if (widthDiff > widthThreshold || heightDiff > heightThreshold) {
@@ -28,13 +49,45 @@
     }
     setInterval(detectDevTools, 1000);
 
-    // 4. 劫持 Console (暂时注释，防止某些浏览器报错导致白屏)
+    
+    function detectMobileInjection() {
+        
+        if (document.querySelector('.eruda-container') || document.querySelector('#__vconsole') || window.eruda || window.vConsole) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
+        }
+    }
+
+    function detectDebuggerAttach() {
+        
+        var start = performance.now();
+        (function(){}).constructor('debugger')();
+        var end = performance.now();
+        if (end - start > 50) {
+            window.location.href = 'about:blank';
+        }
+    }
+
+    function detectAutomation() {
+        if (navigator.webdriver || window.Cypress) {
+            window.location.href = 'about:blank';
+        }
+    }
+
+    
+    setInterval(function() {
+        detectMobileInjection();
+        detectDebuggerAttach();
+        detectAutomation();
+    }, 2500);
+
+    // 5. 劫持 Console (暂时注释，防止某些浏览器报错导致白屏)
     // var originalConsoleLog = console.log;
     // console.log = function() { /* 静默拦截 */ };
     // console.warn = function() { /* 静默拦截 */ };
     // console.error = function() { /* 静默拦截 */ };
 
-    // 5. 无限 Debugger 陷阱 (⚠️ 已注释，由于它会导致JS立即崩溃，从而让页面白屏。恢复正常后再调试此功能)
+    // 6. 无限 Debugger 陷阱 (已注释，防止白屏)
     // (function boobytrap() {
     //     (function() {
     //         return false;
@@ -953,15 +1006,15 @@
                 try {
                     let requestBody = { userId, newPassword };
                     if (email === SUPER_ADMIN_EMAIL) {
-    		const secret = prompt('请输入超级管理员密钥（二次确认）：');
-   		 if (secret === null) return; // 用户取消
-   		 const trimmedSecret = secret.trim(); // 核心修复：去除前后空格
-   		if (trimmedSecret === '') {
-       		showToast('密钥不能为空');
-        		return;
-   		 }
-   		 requestBody.secret = trimmedSecret; // 把去空格后的密钥传给后端
-	}
+                        const secret = prompt('请输入超级管理员密钥（二次确认）：');
+                        if (secret === null) return; // 用户取消
+                        const trimmedSecret = secret.trim(); // 核心修复：去除前后空格
+                        if (trimmedSecret === '') {
+                            showToast('密钥不能为空');
+                            return;
+                        }
+                        requestBody.secret = trimmedSecret; // 把去空格后的密钥传给后端
+                    }
                     
                     // 3. 统一发送请求
                     const { data, error } = await supabase.functions.invoke('reset-user-password', { 
