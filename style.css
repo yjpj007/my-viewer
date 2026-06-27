@@ -884,7 +884,7 @@ td {
 }
 .mode-btn:active { transform: scale(0.95); }
 
-/* ===== 顶部统计仪表盘 (机甲风, 不发光) ===== */
+/* ===== 顶部统计仪表盘 ===== */
 .mode-stats-card {
     display: flex;
     align-items: center;
@@ -909,13 +909,11 @@ td {
     font-size: 1.8rem;
     font-weight: 900;
     color: #e0f7fa;
-    
     text-shadow: 1px 1px 0 #000, 2px 2px 0 #000, 3px 3px 0 #000, 4px 4px 0 #2a2a2a;
     line-height: 1;
     white-space: nowrap;
     flex-shrink: 0;
 }
-
 
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
@@ -967,9 +965,11 @@ td {
 }
 
 .station-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.station-item label { margin: 0; cursor: pointer; flex: 1; word-break: break-word; font-size: 0.85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.station-item label { 
+    margin: 0; cursor: pointer; flex: 1; word-break: break-word; font-size: 0.85rem; 
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; 
+}
 .station-item input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--neon-blue); }
-
 
 .count-prefix {
     display: inline-block;
@@ -1123,7 +1123,6 @@ td {
     .batch-controls { gap: 4px; justify-content: center; }
     .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
 
-   
     .station-list {
         max-height: 45vh;
         min-height: 120px;
@@ -1139,7 +1138,6 @@ td {
         min-width: 24px;
     }
 
-    
     .mode-switch-wrapper {
         flex-wrap: nowrap !important;
         justify-content: space-between;
