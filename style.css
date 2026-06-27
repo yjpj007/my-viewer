@@ -493,13 +493,14 @@ body::after {
     right: 20px;
     width: 360px;
     max-width: 90vw;
-    background: var(--panel-bg);
+    background: rgba(15, 20, 45, 0.96);          /* 大幅提高不透明度（原 0.85） */
+    backdrop-filter: blur(24px);                 /* 增强模糊效果（原 10px） */
+    -webkit-backdrop-filter: blur(24px);         /* 兼容 Safari */
     border: 1px solid var(--glass-border);
     border-radius: 16px;
     padding: 20px 25px 25px 25px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 30px rgba(0, 200, 255, 0.15); /* 加深阴影，突出层次 */
     z-index: 10000;
-    backdrop-filter: blur(10px);
     box-sizing: border-box;
 }
 .calc-popup .field-row {
