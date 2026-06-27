@@ -1158,7 +1158,7 @@ td {
         flex-shrink: 0;
         padding: 2px 8px 2px 10px !important;
         gap: 4px !important;
-        display: flex !important; 
+        display: flex; /* 移除 !important 以便 JS 控制显示隐藏 */
     }
     .mode-stats-label {
         font-size: 0.55rem !important;
