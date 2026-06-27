@@ -884,7 +884,7 @@ td {
 }
 .mode-btn:active { transform: scale(0.95); }
 
-/* ===== 顶部统计仪表盘 ===== */
+/* ===== 顶部统计仪表盘 (机甲风, 不发光) ===== */
 .mode-stats-card {
     display: flex;
     align-items: center;
@@ -909,14 +909,14 @@ td {
     font-size: 1.8rem;
     font-weight: 900;
     color: #e0f7fa;
-    /* 消除旧发光，改为金属机甲风格的硬阴影 */
+    
     text-shadow: 1px 1px 0 #000, 2px 2px 0 #000, 3px 3px 0 #000, 4px 4px 0 #2a2a2a;
     line-height: 1;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
-/* ===== 批量控制与日期面板 ===== */
+
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
 
@@ -967,8 +967,23 @@ td {
 }
 
 .station-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.station-item label { margin: 0; cursor: pointer; flex: 1; word-break: break-word; font-size: 0.85rem; }
+.station-item label { margin: 0; cursor: pointer; flex: 1; word-break: break-word; font-size: 0.85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .station-item input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--neon-blue); }
+
+
+.count-prefix {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    color: var(--neon-blue);
+}
+.count-value {
+    display: inline-block;
+    min-width: 30px;
+    text-align: right;
+    font-weight: bold;
+    color: var(--success);
+}
 
 .modal-overlay .modal select, .modal-overlay .modal select option { background-color: #1e293b !important; color: #ffffff !important; }
 
@@ -1108,39 +1123,23 @@ td {
     .batch-controls { gap: 4px; justify-content: center; }
     .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
 
-    /* 移动端适配 */
+   
     .station-list {
         max-height: 45vh;
         min-height: 120px;
     }
     .station-item label {
         font-size: 0.7rem;
-    }
-
-    /* 移动端日期同行 */
-    .date-range-panel {
-        flex-wrap: nowrap !important;
+        display: flex;
+        flex-wrap: wrap; 
+        align-items: center;
         gap: 4px;
     }
-    .date-input {
-        flex: 1;
-        min-width: 0;
-        padding: 4px 6px;
-        gap: 4px;
-    }
-    .date-input label {
-        width: 35px;
-        font-size: 0.6rem;
-        flex-shrink: 0;
-        text-align: right;
-    }
-    .date-input input {
-        height: 30px;
-        font-size: 0.7rem;
-        padding: 0 4px;
+    .count-value {
+        min-width: 24px;
     }
 
-    /* 移动端顶部导航栏优化 */
+    
     .mode-switch-wrapper {
         flex-wrap: nowrap !important;
         justify-content: space-between;
@@ -1149,22 +1148,23 @@ td {
     .mode-switch {
         flex-shrink: 1;
         min-width: 0;
-        gap: 4px;
+        gap: 2px;
     }
     .mode-btn {
-        font-size: 0.6rem;
-        padding: 4px 8px;
+        font-size: 0.55rem !important;
+        padding: 4px 6px !important;
     }
     .mode-stats-card {
         flex-shrink: 0;
-        padding: 2px 10px 2px 12px;
-        gap: 6px;
+        padding: 2px 8px 2px 10px !important;
+        gap: 4px !important;
+        display: flex !important; 
     }
     .mode-stats-label {
-        font-size: 0.6rem;
+        font-size: 0.55rem !important;
     }
     .mode-stats-number {
-        font-size: 1.4rem;
+        font-size: 1.4rem !important;
     }
 
     .date-range-panel { flex-wrap: wrap; gap: 6px; }
