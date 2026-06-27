@@ -849,8 +849,23 @@ td {
 
 .fuel-editor-container, .cardno-editor-container { flex: 1; }
 
-.mode-switch { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-
+/* ===== 顶部标签区改造 ===== */
+.mode-switch-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
+}
+.mode-switch {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+}
 .mode-btn {
     background: rgba(255,255,255,0.1);
     border: 1px solid var(--glass-border);
@@ -861,16 +876,47 @@ td {
     font-size: 0.85rem;
     transition: all 0.2s;
 }
-
 .mode-btn.active {
     background: var(--neon-blue);
     color: #0a0a0f;
     border-color: var(--neon-blue);
     box-shadow: 0 0 10px var(--neon-blue);
 }
-
 .mode-btn:active { transform: scale(0.95); }
 
+/* ===== 顶部统计仪表盘 ===== */
+.mode-stats-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 243, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    padding: 4px 18px 4px 22px;
+    border-radius: 40px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.08);
+    flex-shrink: 0;
+}
+.mode-stats-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+.mode-stats-number {
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    transform: perspective(500px) rotateX(10deg) rotateY(2deg);
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #e0f7fa;
+    /* 消除旧发光，改为金属机甲风格的硬阴影 */
+    text-shadow: 1px 1px 0 #000, 2px 2px 0 #000, 3px 3px 0 #000, 4px 4px 0 #2a2a2a;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ===== 批量控制与日期面板 ===== */
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
 
@@ -1058,15 +1104,74 @@ td {
     .modal input:not([type="date"]), .modal textarea { height: 32px; line-height: 30px; padding: 0 6px; font-size: 0.7rem; }
     .modal input[type="date"] { height: 32px; padding: 0 6px; font-size: 0.7rem; line-height: normal; }
     .modal button { padding: 4px 10px; font-size: 0.65rem; margin: 3px 2px 0 0; height: 32px; }
-    .mode-btn { padding: 4px 8px; font-size: 0.65rem; }
+    
     .batch-controls { gap: 4px; justify-content: center; }
     .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
+
+    /* 移动端适配 */
+    .station-list {
+        max-height: 45vh;
+        min-height: 120px;
+    }
+    .station-item label {
+        font-size: 0.7rem;
+    }
+
+    /* 移动端日期同行 */
+    .date-range-panel {
+        flex-wrap: nowrap !important;
+        gap: 4px;
+    }
+    .date-input {
+        flex: 1;
+        min-width: 0;
+        padding: 4px 6px;
+        gap: 4px;
+    }
+    .date-input label {
+        width: 35px;
+        font-size: 0.6rem;
+        flex-shrink: 0;
+        text-align: right;
+    }
+    .date-input input {
+        height: 30px;
+        font-size: 0.7rem;
+        padding: 0 4px;
+    }
+
+    /* 移动端顶部导航栏优化 */
+    .mode-switch-wrapper {
+        flex-wrap: nowrap !important;
+        justify-content: space-between;
+        gap: 4px;
+    }
+    .mode-switch {
+        flex-shrink: 1;
+        min-width: 0;
+        gap: 4px;
+    }
+    .mode-btn {
+        font-size: 0.6rem;
+        padding: 4px 8px;
+    }
+    .mode-stats-card {
+        flex-shrink: 0;
+        padding: 2px 10px 2px 12px;
+        gap: 6px;
+    }
+    .mode-stats-label {
+        font-size: 0.6rem;
+    }
+    .mode-stats-number {
+        font-size: 1.4rem;
+    }
+
     .date-range-panel { flex-wrap: wrap; gap: 6px; }
     .date-input { flex: auto; width: 100%; }
     .date-input label { width: auto; }
     .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
     .batch-action-buttons button, .edit-create-footer button { flex: 1; height: 30px; }
-    .station-item label { font-size: 0.65rem; }
     .field-row { flex-wrap: nowrap; gap: 4px; margin-bottom: 8px; }
     .field-row label { width: 70px; white-space: nowrap; font-size: 0.65rem; }
     .field-row select, .field-row input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 4px; font-size: 0.7rem; }
