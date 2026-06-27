@@ -621,7 +621,7 @@
         calcPopup.style.display = 'none';
         calcPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-right:20px;">
-                <span style="font-weight:bold; color:var(--neon-blue);">💰 费用计算器</span>
+                <span style="font-weight:bold; color:var(--neon-blue);">💰 费用预测计算器</span>
                 <span class="calc-popup-close" id="calcPopupClose">&times;</span>
             </div>
             <div class="field-row"><label>每日数量</label><input type="number" id="calcDaily" value="300" min="0"></div>
@@ -637,7 +637,7 @@
                 <div class="calc-divider"></div>
                 <div class="calc-result-stats-row">
                     <div class="calc-stat-item">
-                        <label>总计数量</label>
+                        <label>本次数量</label>
                         <span id="calcTotal" class="calc-val-neon">-</span>
                     </div>
                     <div class="calc-stat-item">
