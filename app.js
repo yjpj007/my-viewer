@@ -95,10 +95,10 @@
     //     setTimeout(boobytrap, 3000);
     // })();
 })();
-// ==================== 调试结束 ====================
+// =======================================
 
 (function() {
-    // -------------------- 缓存常用DOM元素 --------------------
+    // ---------------------------------------
     const particleCanvas = document.getElementById('particleCanvas');
     const ctx = particleCanvas.getContext('2d');
     let particles = [], PARTICLE_COUNT = 100, isPageVisible = true, lastFrameTime = 0;
@@ -164,7 +164,7 @@
     requestAnimationFrame(animateParticles);
     document.addEventListener('visibilitychange', () => { isPageVisible = !document.hidden; });
 
-    // -------------------- 工具函数 --------------------
+    // ----------------------------------------
     const escapeHtml = (str) => {
         if (str == null) return '';
         const div = document.createElement('div');
@@ -184,15 +184,15 @@
         return { start: startDateStr, end: endNextStr };
     };
 
-    // -------------------- Supabase 配置 --------------------
+    // --------------------------------------
     const SUPABASE_URL = "https://gbedtcwsnwteneiokizp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_6kqvIXFMeqXW-xmwh7GcHQ_LvfH2zon";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const SUPER_ADMIN_EMAIL = "liuping@vip.com";
     const PAGE_SIZE = 50;
-    // 密钥已安全移除，现由 Supabase 环境变量（Secrets）安全保管！
+    
 
-    // -------------------- 全局状态与缓存元素 --------------------
+    // ----------------------------------------
     let currentStartDate = getLocalDateString();
     let currentEndDate = getLocalDateString();
     let currentFilterStncode = '';
@@ -208,7 +208,7 @@
 
     const getEl = (id) => document.getElementById(id);
 
-    // -------------------- UI 辅助函数 --------------------
+    // ----------------------------------------
     const showToast = (message, type = 'error') => {
         let container = getEl('toastContainer');
         if (!container) {
@@ -306,7 +306,7 @@
         }
     };
 
-    // ==================== 优化后的数据获取（服务端分页/排序/聚合） ====================
+    // ========================================
     const fetchTotalCount = async (startDate, endDate, filterStncode, signal) => {
         const range = getDateRange(startDate, endDate);
         let query = supabase.from('request_logs')
@@ -446,7 +446,7 @@
         }
     };
 
-    // -------------------- 渲染函数 --------------------
+    // -------------------------------------
     const renderSummary = () => {
         const validItems = currentRangeAggregates.filter(item => item.stncode);
         const items = validItems.map(({ stncode, count }) =>
@@ -565,7 +565,7 @@
         loadRangeData();
     };
 
-    // -------------------- 界面构建 --------------------
+    // -------------------- -------------------
     const buildUI = () => {
         const app = getEl('app');
         app.innerHTML = '';
@@ -713,9 +713,7 @@
             }, 300);
         });
 
-        // ==========================================
-        // 计算器下拉弹窗逻辑
-        // ==========================================
+        
         const calcPopupEl = getEl('calcPopup');
         const headerCalcTrigger = getEl('headerCalcTrigger');
         const calcPopupClose = getEl('calcPopupClose');
@@ -906,9 +904,7 @@
         getEl('configBtn').style.display = isSuperAdmin ? 'inline-block' : 'none';
     };
 
-    // =================================================================
-    // 用户管理面板（包含权限配置）
-    // =================================================================
+    
     const showAdminPanel = async () => {
         const role = await getCurrentUserRole();
         if (role !== 'super_admin') { showToast('权限不足'); return; }
@@ -988,21 +984,21 @@
             await showPermissionConfig(userId, email, session.access_token);
         });
 
-        // ===== 核心重置密码逻辑（已修复） =====
+        
         document.getElementById('userTableBody').addEventListener('click', async (e) => {
             const target = e.target;
             if (target.classList.contains('reset-pwd-btn')) {
                 const userId = target.dataset.userid; 
                 const email = target.dataset.email;
                 
-                // 1. 先获取新密码（放在最前面，防止变量未定义报错）
+                
                 const newPassword = prompt(`为 ${email} 设置新密码（至少6位）：`);
                 if (!newPassword || newPassword.length < 6) { 
                     showToast('密码不能为空且至少6位'); 
                     return; 
                 }
 
-                // 2. 判断是否超级管理员，决定是否加入二次验证参数
+                
                 try {
                     let requestBody = { userId, newPassword };
                     if (email === SUPER_ADMIN_EMAIL) {
@@ -1016,7 +1012,7 @@
                         requestBody.secret = trimmedSecret; // 把去空格后的密钥传给后端
                     }
                     
-                    // 3. 统一发送请求
+                    
                     const { data, error } = await supabase.functions.invoke('reset-user-password', { 
                         method: 'POST', 
                         body: requestBody
@@ -1058,7 +1054,7 @@
         });
     };
 
-    // ---------- 权限配置模态框（增强版） ----------
+    // ------------------
     const showPermissionConfig = async (userId, email, accessToken) => {
         showLoading('加载站点数据...');
         let allStations = [];
@@ -1153,7 +1149,7 @@
         });
     };
 
-    // ---------- 其他原有函数（batchCreateAccounts等）保持不变 ----------
+    // ---------- ----------
     const batchCreateAccounts = async () => {
         const role = await getCurrentUserRole();
         if (role !== 'super_admin') { showToast('权限不足'); return; }
@@ -1589,7 +1585,7 @@
         document.getElementById('applyDateToAll').addEventListener('click', () => { const start = document.getElementById('customStartDate').value, end = document.getElementById('customEndDate').value; if (!start || !end) showToast('请填写完整日期'); else updateStationsDates(stationsList.map(s => s.id), start, end); });
     };
 
-    // -------------------- 绑定事件 --------------------
+    // ----------------------------------------
     const bindEvents = () => {
         const loginBtn = getEl('loginBtn');
         if (loginBtn) loginBtn.addEventListener('click', login);
