@@ -1140,6 +1140,13 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .unsettled-hero-btn { padding: 5px 12px; font-size: 0.78rem; margin-top: 6px; }
     .fee-table th, .fee-table td { padding: 3px 2px; font-size: 0.66rem; }
     .settle-submodal { width: 96vw; padding: 14px; }
+    .modal.le-submodal { width: 96vw !important; max-width: 96vw !important; max-height: 90vh !important; height: auto !important; overflow-y: auto !important; padding: 16px !important; margin: 5vh auto !important; }
+    .modal.le-submodal h4 { font-size: 1.1rem; margin-bottom: 12px; }
+    .modal.le-submodal .field-row { margin-bottom: 10px; flex-wrap: wrap; }
+    .modal.le-submodal .field-row label { width: 100%; margin-bottom: 4px; }
+    .modal.le-submodal .field-row input, .modal.le-submodal .field-row select { font-size: 16px !important; height: 38px !important; }
+    .modal.le-submodal .actions { margin-top: 14px; }
+    .modal.le-submodal .actions button { padding: 8px 14px; font-size: 0.85rem; height: 38px; }
     /* ===== 预收款管理 移动端全屏化（与费用/配置弹窗风格一致） ===== */
     #prepayOverlay { padding: 0 !important; align-items: stretch !important; }
     #prepayOverlay .prepay-modal {
