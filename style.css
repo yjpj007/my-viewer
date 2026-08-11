@@ -978,6 +978,21 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .settle-submodal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 .settle-submodal select { background-color: #1e293b !important; }
 .settle-submodal .prepay-row { background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.25); }
+.le-submodal {
+ background: var(--panel-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 24px;
+    width: min(560px, 92vw);
+    max-width: 560px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+.le-submodal h4 { color: var(--neon-blue); margin-bottom: 16px; font-size: 1.25rem; }
+.le-submodal .field-row { margin-bottom: 12px; display: flex; align-items: center; }
+.le-submodal .field-row label { width: 90px; flex-shrink: 0; }
+.le-submodal .field-row input, .le-submodal .field-row select { flex: 1; height: 36px; }
+.le-submodal .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.le-submodal .actions button { padding: 10px 22px; height: 40px; font-size: 0.9rem; }
 
 /* ===== 17. 用户管理弹窗 ===== */
 #userEmailSearchToggleBtn { display: none; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid rgba(0,229,255,0.25); border-radius: 6px; background: rgba(0,229,255,0.06); color: var(--neon-cyan); font-size: 0.78rem; cursor: pointer; flex-shrink: 0; }
