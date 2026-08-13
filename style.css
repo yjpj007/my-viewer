@@ -1436,8 +1436,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         content: attr(data-label); color: rgba(148, 163, 184, 0.55);
         font-size: 0.7rem; font-weight: 400;
         flex-shrink: 0; white-space: nowrap;
-        text-align: left; margin-right: 6px;
+        text-align: justify; text-align-last: justify;
+        margin-right: 6px;
         line-height: 1;
+        width: 4.5em;
     }
     .fee-table td.ftd-actual::before { color: rgba(148, 163, 184, 0.6) !important; font-weight: 400 !important; }
     .fee-table td > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -1506,6 +1508,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .fee-table tr.fee-total-row td.ftd-total-label::before { display: none; }
     .fee-table tr.fee-total-row td.ftd-total-info { order: 99; color: #ffb3b3; }
     .fee-table tr.fee-total-row td.ftd-total-info::before { display: none; }
+    /* 合计行三项金额统一整行右对齐，值右边缘一致（与 全价费用/阶梯费用 对齐） */
+    .fee-table tr.fee-total-row td.ftd-full,
+    .fee-table tr.fee-total-row td.ftd-actual,
+    .fee-table tr.fee-total-row td.ftd-prepay { flex: 0 0 100%; justify-content: space-between; }
     .fee-table tr.fee-empty-row td { justify-content: center; padding: 24px !important; }
 
     /* ===== 用户管理移动端 ===== */
