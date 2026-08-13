@@ -919,13 +919,62 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .stl-act.undo { border-color: rgba(244,114,182,0.5); color: #F9A8D4; }
 .stl-act.undo:hover { background: rgba(244,114,182,0.15); border-color: rgba(244,114,182,0.8); box-shadow: 0 0 12px rgba(244,114,182,0.25); color: #F472B6; }
 
-.fee-table { width: 100%; table-layout: auto; white-space: nowrap; border-collapse: collapse; }
-.fee-table th, .fee-table td { padding: 10px 8px; text-align: center; }
-.fee-table tr.unsettled-row td { background: transparent !important; }
-.fee-table tr.partial-row td { background: transparent !important; }
-.fee-table thead th { position: sticky !important; top: 0 !important; z-index: 10; background: rgba(15,20,45,0.98) !important; backdrop-filter: blur(10px); border-bottom: 2px solid var(--neon-blue); }
-.fee-total-row td { font-weight: bold; background: rgba(0,243,255,0.08); }
-.fee-table td.ftd-code, .fee-table td.ftd-name { padding-left: 14px !important; }
+.fee-table { width: 100%; table-layout: auto; border-collapse: collapse; }
+.fee-table thead th {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(15,20,45,0.98) !important;
+  backdrop-filter: blur(10px);
+  padding: 14px 12px !important;
+  font-size: 0.78rem !important; font-weight: 600;
+  color: #94a3b8 !important;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  text-align: left !important;
+}
+.fee-table tbody tr {
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  border-radius: 10px;
+}
+.fee-table tbody tr:hover td:first-child {
+  box-shadow: none !important;
+}
+.fee-table tbody tr:hover td {
+  background: rgba(255,255,255,0.02) !important;
+}
+.fee-table tbody tr.partial-row td { background: transparent !important; border-color: transparent; }
+.fee-table tbody tr.partial-row > td:first-child { box-shadow: none !important; border-left: none; }
+.fee-table tbody tr.unsettled-row td { background: transparent !important; border-color: transparent; }
+.fee-table tbody tr.unsettled-row > td:first-child { box-shadow: none !important; border-left: none; }
+.fee-table th, .fee-table td {
+  padding: 14px 6px !important;
+  text-align: left;
+  font-size: 0.86rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: middle;
+}
+/* PC 站点列：编码 + 站名 两个独立 td，精确对齐两列表头 */
+.fee-table td.ftd-code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 0.85rem; color: #94a3b8; font-weight: 500; white-space: nowrap; vertical-align: middle; text-align: left; }
+.fee-table td.ftd-name { padding-left: 14px !important; white-space: nowrap; vertical-align: middle; font-weight: 600; color: #f1f5f9; font-size: 0.95rem; }
+.fee-table td.ftd-enabled { vertical-align: middle; white-space: nowrap; }
+.fee-table td.ftd-enabled .fee-enabled-badge { padding: 3px 8px; font-size: 0.68rem; }
+.fee-table td.ftd-count { font-weight: 700; color: #00e5ff; font-size: 1rem; vertical-align: middle; }
+.fee-table td.ftd-count .ftd-count-row { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.fee-table td.ftd-count .ftd-count-num { font-weight: 700; color: #00e5ff; font-size: 1rem; flex: 0 0 auto; display: block !important; margin-bottom: 2px; }
+.fee-table td.ftd-ranges-empty { display: table-cell; }
+.fee-table td.ftd-full { color: #94a3b8; font-size: 0.85rem; }
+.fee-table td.ftd-actual { font-weight: 700; color: #4ade80; font-size: 0.95rem; }
+.fee-table td.ftd-prepay { font-size: 0.85rem; }
+.fee-table td.ftd-month { font-size: 0.85rem; color: #94a3b8; white-space: nowrap; }
+.fee-table td.ftd-status { white-space: nowrap; }
+.fee-table td.ftd-act { text-align: right; }
+.fee-table td.ftd-month { font-size: 0.85rem; color: #94a3b8; white-space: nowrap; }
+.fee-table td.ftd-status { white-space: nowrap; }
+.fee-table td.ftd-act { text-align: right; }
+.fee-total-row td { font-weight: bold; background: transparent !important; padding: 14px 12px !important; }
+.fee-enabled-badge { display: inline-flex; align-items: center; flex: 0 0 auto; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; line-height: 1.2; white-space: nowrap; letter-spacing: 0.3px; }
+.fee-enabled-badge.on { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2); }
+.fee-enabled-badge.off { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); box-shadow: 0 0 8px rgba(239, 68, 68, 0.15); }
+.fee-enabled-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background: currentColor; box-shadow: 0 0 6px currentColor; }
 
 /* 滚动容器通用 */
 .table-responsive { width: 100%; }
@@ -1051,6 +1100,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .org-code-search-item .oc-name { flex: 1; color: var(--text-primary, #fff); }
 .org-code-search-item .oc-code { font-family: monospace; color: var(--success, #52c41a); font-weight: 700; flex-shrink: 0; background: rgba(82,196,26,0.12); padding: 1px 7px; border-radius: 4px; }
 .org-code-search-empty { padding: 14px; text-align: center; color: var(--text-secondary, #9aa3b2); font-size: 13px; }
+
+/* ftd-code / ftd-name 通用基础规则（PC + 移动端） */
+.fee-table td.ftd-code, .fee-table td.ftd-name { white-space: nowrap; min-width: 0; overflow: visible !important; }
+.fee-table td.ftd-code::before, .fee-table td.ftd-name::before { display: none; }
 
 /* ===== 19. 移动端（≤768px）主布局 ===== */
 @media (max-width: 768px) {
@@ -1335,66 +1388,67 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .fee-table, .fee-table tbody { display: block; width: 100%; }
     .fee-table tr {
         display: grid;
-        grid-template-columns: auto 1fr 1fr;
+        grid-template-columns: auto 1fr 1fr auto;
         gap: 0;
-        border: 1px solid rgba(52,211,153,0.15);
-        border-left: 4px solid #34D399;
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 14px;
         margin-bottom: 12px;
-        background: linear-gradient(135deg, rgba(0, 90, 65, 0.78) 0%, rgba(10, 130, 85, 0.68) 50%, rgba(0, 70, 55, 0.78) 100%);
+        background: rgba(13, 105, 75, 0.72);
         backdrop-filter: blur(14px) saturate(180%);
         -webkit-backdrop-filter: blur(14px) saturate(180%);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4), -4px 0 28px rgba(52,211,153,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+        box-shadow: 0 3px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
         transition: transform 0.2s ease, box-shadow 0.3s ease;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
     .fee-table tr::before {
-        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, #34D399, #2DD4BF, transparent);
-        box-shadow: 0 0 12px rgba(52,211,153,0.6);
-        pointer-events: none; z-index: 2; display: block !important;
+        display: none !important;
     }
     .fee-table tr::after {
-        content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: radial-gradient(ellipse at top right, rgba(52,211,153,0.18) 0%, transparent 60%);
-        pointer-events: none; z-index: 0;
+        display: none !important;
     }
     .fee-table tr:active { transform: scale(0.99); }
     .fee-table tr.unsettled-row {
-        background: linear-gradient(135deg, rgba(110, 0, 80, 0.75) 0%, rgba(145, 20, 110, 0.65) 50%, rgba(85, 0, 65, 0.75) 100%);
-        border: 1px solid rgba(244,114,182,0.42);
-        border-left: 4px solid #F472B6;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4), -4px 0 28px rgba(244,114,182,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+        background: rgba(118, 22, 92, 0.72);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 3px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
     }
-    .fee-table tr.unsettled-row::before { background: linear-gradient(90deg, transparent, #F472B6, #C084FC, transparent); box-shadow: 0 0 12px rgba(244,114,182,0.6); }
-    .fee-table tr.unsettled-row::after { background: radial-gradient(ellipse at top right, rgba(244,114,182,0.18) 0%, transparent 60%); }
+    .fee-table tr.unsettled-row::before { display: none !important; }
+    .fee-table tr.unsettled-row::after { display: none !important; }
     .fee-table tr.partial-row {
-        background: linear-gradient(135deg, rgba(110, 55, 0, 0.75) 0%, rgba(150, 75, 10, 0.65) 50%, rgba(85, 40, 0, 0.75) 100%);
-        border: 1px solid rgba(251,146,60,0.42);
-        border-left: 4px solid #FB923C;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4), -4px 0 28px rgba(251,146,60,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+        background: rgba(128, 72, 14, 0.72);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 3px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
     }
-    .fee-table tr.partial-row::before { background: linear-gradient(90deg, transparent, #FB923C, #FBBF24, transparent); box-shadow: 0 0 12px rgba(251,146,60,0.6); }
-    .fee-table tr.partial-row::after { background: radial-gradient(ellipse at top right, rgba(251,146,60,0.18) 0%, transparent 60%); }
+    .fee-table tr.partial-row::before { display: none !important; }
+    .fee-table tr.partial-row::after { display: none !important; }
     .fee-table td {
-        display: flex; align-items: baseline; gap: 6px;
+        display: flex; align-items: center; gap: 6px;
         border: none !important;
-        padding: 7px 14px !important;
+        padding: 5px 12px !important;
         font-size: 0.86rem !important;
         overflow: hidden;
         position: relative; z-index: 1;
+        min-height: 28px;
+        line-height: 1;
     }
     .fee-table td::before {
-        content: attr(data-label); color: rgba(148, 163, 184, 0.6);
+        content: attr(data-label); color: rgba(148, 163, 184, 0.55);
         font-size: 0.7rem; font-weight: 400;
         flex-shrink: 0; white-space: nowrap;
-        min-width: 4.5em; text-align: justify; text-align-last: justify;
+        text-align: left; margin-right: 6px;
+        line-height: 1;
     }
-    .fee-table td.ftd-actual::before { color: rgba(148, 163, 184, 0.6) !important; font-weight: 400 !important; min-width: 4.5em !important; }
-    .fee-table td.ftd-count::before { font-weight: 400 !important; min-width: 4.5em !important; }
+    .fee-table td.ftd-actual::before { color: rgba(148, 163, 184, 0.6) !important; font-weight: 400 !important; }
     .fee-table td > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-    .fee-table td.ftd-chk { grid-row: 1; grid-column: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; padding: 12px 6px 10px 14px !important; line-height: 18px; }
+    /* 移动端卡片：flex 流式布局，row1 编码+站名同排，row2/row6 各自半行 */
+    .fee-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        margin-bottom: 10px;
+    }
+    .fee-table td.ftd-chk { flex: 0 0 32px; display: flex; flex-direction: row; align-items: center; justify-content: center; padding: 5px 2px !important; line-height: 18px; min-width: 0; min-height: 30px; }
     .fee-table td.ftd-chk::before { display: none; }
     .fee-table td.ftd-chk input {
         -webkit-appearance: none; -moz-appearance: none; appearance: none;
@@ -1403,38 +1457,52 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         background: rgba(255, 255, 255, 0.05);
         transition: all 0.2s ease;
     }
-    .fee-table td.ftd-chk input:checked {
-        background-color: #38BDF8; border-color: #38BDF8;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 6L5 9L10 3' stroke='%230d1230' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: center;
-        box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-    }
-    .fee-table td.ftd-chk input:disabled { opacity: 0.3; cursor: not-allowed; }
-    .fee-table td.ftd-code { grid-row: 1; grid-column: 2; padding: 12px 8px 10px 14px !important; flex-direction: row; align-items: center; font-weight: 600; font-size: 0.95rem !important; color: rgba(148, 163, 184, 0.85); white-space: nowrap; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; letter-spacing: 0.5px; line-height: 18px; }
-    .fee-table td.ftd-code::before { content: attr(data-label); display: inline-block; min-width: 4.5em; font-size: 0.7rem; font-weight: 400; color: transparent; }
-    .fee-table td.ftd-name { grid-row: 1; grid-column: 3; padding: 12px 14px 10px 14px !important; flex-direction: row; align-items: center; font-size: 1rem !important; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 18px; }
+    /* 编码：固定宽度，右侧留间距 */
+    .fee-table td.ftd-code { flex: 0 0 auto; padding: 5px 10px 5px 12px !important; white-space: nowrap; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 700; color: #f1f5f9; font-size: 0.86rem; min-width: 0; overflow: visible !important; }
+    .fee-table td.ftd-code::before { display: none; }
+    /* 站名：占剩余空间，长站名不截断 */
+    .fee-table td.ftd-name { flex: 1 1 0; min-width: 0; padding: 5px 6px 5px 4px !important; white-space: nowrap; font-weight: 600; color: #f1f5f9; font-size: 0.86rem; overflow: visible !important; }
     .fee-table td.ftd-name::before { display: none; }
-    .fee-table td.ftd-month { grid-row: 2; grid-column: 2; padding-top: 10px !important; }
-    .fee-table td.ftd-count { grid-row: 2; grid-column: 3; padding-top: 10px !important; }
-    .fee-table td.ftd-full { grid-row: 3; grid-column: 2 / -1; }
-    .fee-table td.ftd-actual { grid-row: 4; grid-column: 2 / -1; }
-    .fee-table td.ftd-prepay { grid-row: 5; grid-column: 2; }
-    .fee-table td.ftd-status { grid-row: 5; grid-column: 3; align-items: center; flex-wrap: wrap; }
+    .fee-table td.ftd-enabled { flex: 0 0 70px; display: flex; flex-direction: row; align-items: center; justify-content: flex-end; padding: 5px 6px 5px 4px !important; font-size: 0.7rem !important; white-space: nowrap; min-width: 0; min-height: 30px; }
+    .fee-table td.ftd-enabled::before { display: none; }
+    .fee-enabled-badge { display: inline-flex; align-items: center; flex: 0 0 auto; padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 500; line-height: 1.2; white-space: nowrap; letter-spacing: 0.3px; }
+    .fee-enabled-badge.on { background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35); }
+.fee-enabled-badge.off { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .fee-enabled-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; margin-right: 5px; background: currentColor; box-shadow: 0 0 4px currentColor; }
+    /* 移动端 row2: month(50%) | count(50%) —— 各占半行，不挤进窄列 */
+    .fee-table td.ftd-month { flex: 0 0 50%; padding: 5px 12px !important; white-space: nowrap; overflow: visible !important; min-height: 28px; }
+    .fee-table td.ftd-count { flex: 0 0 50%; padding: 5px 12px !important; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; text-align: right; justify-content: flex-end; min-height: 28px; }
+    .fee-table td.ftd-count::before { flex: 0 0 auto; }
+    .fee-table td.ftd-count .ftd-count-row { display: contents; }
+    .fee-table td.ftd-count .ftd-count-num { display: inline !important; margin-bottom: 0; flex: 0 0 auto; font-size: 0.9rem; }
+    .fee-table td.ftd-ranges { flex: 0 0 100%; display: flex !important; align-items: center; gap: 6px; padding: 5px 12px !important; justify-content: flex-start; text-align: left; white-space: nowrap; overflow: visible !important; }
+    .fee-table td.ftd-ranges .daily-ranges-cell { background: transparent !important; border: none !important; padding: 0 !important; font-size: inherit !important; color: inherit !important; font-weight: 400 !important; max-width: none !important; }
+    .fee-table td.ftd-full { flex: 0 0 100%; padding: 5px 12px !important; min-height: 26px; }
+    .fee-table td.ftd-actual { flex: 0 0 100%; padding: 5px 12px !important; min-height: 26px; }
+    /* 移动端 row6: prepay(50%) | status(50%) */
+    .fee-table td.ftd-prepay { flex: 0 0 50%; padding: 5px 12px !important; white-space: nowrap; overflow: visible !important; min-height: 28px; }
+    .fee-table td.ftd-status { flex: 0 0 50%; padding: 5px 12px !important; align-items: center; flex-wrap: wrap; justify-content: flex-end; text-align: right; min-height: 28px; }
     .fee-table td.ftd-status::before { display: none; }
-    .fee-table td.ftd-act { grid-row: 6; grid-column: 1 / -1; justify-content: center; padding: 10px 14px 12px !important; }
+    .fee-table td.ftd-act { flex: 0 0 100%; justify-content: center; padding: 6px 12px 8px !important; min-height: 32px; }
     .fee-table td.ftd-act::before { display: none; }
-    .fee-table td.ftd-act .stl-act { padding: 7px 28px; font-size: 0.82rem; border-radius: 10px; }
+    .fee-table td.ftd-act .stl-act { padding: 6px 14px; font-size: 0.78rem; border-radius: 8px; white-space: nowrap; }
     .fee-table tr.fee-total-row {
-        background: linear-gradient(135deg, rgba(0, 80, 140, 0.78) 0%, rgba(15, 105, 170, 0.68) 50%, rgba(0, 60, 120, 0.78) 100%) !important;
-        border: 1px solid rgba(56,189,248,0.45) !important;
-        border-left: 4px solid #38BDF8 !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4), -4px 0 28px rgba(56,189,248,0.35), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+        background: rgba(10, 85, 150, 0.75) !important;
+        border: 1px solid rgba(255,255,255,0.10) !important;
+        box-shadow: 0 3px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08) !important;
     }
-    .fee-table tr.fee-total-row::before { background: linear-gradient(90deg, transparent, #38BDF8, #818CF8, transparent); box-shadow: 0 0 12px rgba(56,189,248,0.6); }
-    .fee-table tr.fee-total-row::after { background: radial-gradient(ellipse at top right, rgba(56,189,248,0.18) 0%, transparent 60%); }
-    .fee-table tr.fee-total-row td { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; font-size: 0.82rem !important; }
-    .fee-table tr.fee-total-row td.ftd-chk { display: none; }
-    .fee-table tr.fee-total-row td.ftd-total-label { order: 0; font-weight: bold; }
+    .fee-table tr.fee-total-row::before { display: none !important; }
+    .fee-table tr.fee-total-row::after { display: none !important; }
+    .fee-table tr.fee-total-row td { flex-direction: row; justify-content: space-between; font-size: 0.84rem !important; padding: 6px 12px !important; }
+    .fee-table tr.fee-total-row td.ftd-ranges-empty { display: none; }
+    /* 移动端合计行每项单独一行（colspan 不生效，需要 grid-column 跨整行） */
+    .fee-table tr.fee-total-row td.ftd-total-label,
+    .fee-table tr.fee-total-row td.ftd-count,
+    .fee-table tr.fee-total-row td.ftd-full,
+    .fee-table tr.fee-total-row td.ftd-actual,
+    .fee-table tr.fee-total-row td.ftd-prepay,
+    .fee-table tr.fee-total-row td.ftd-total-info { grid-column: 1 / -1; }
+    .fee-table tr.fee-total-row td.ftd-total-label { order: 0; font-weight: bold; text-align: left !important; }
     .fee-table tr.fee-total-row td.ftd-total-label::before { display: none; }
     .fee-table tr.fee-total-row td.ftd-total-info { order: 99; color: #ffb3b3; }
     .fee-table tr.fee-total-row td.ftd-total-info::before { display: none; }
@@ -1501,22 +1569,50 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .login-box { max-height: 90vh; overflow-y: auto; }
 }
 
-/* ===== 22. PC 费用弹窗自适应优化（≥769px） ===== */
+/* ===== 22. PC 费用管理全屏（≥769px） —— 不再用 modal 挤在中间 ===== */
 @media (min-width: 769px) {
-    #feeModalOverlay .fee-modal-box { max-width: 1200px; width: 90vw; }
-    .fee-table { width: 100%; table-layout: fixed; white-space: nowrap; }
-    .fee-table th, .fee-table td { overflow: hidden; text-overflow: ellipsis; }
-    .fee-table th:nth-child(1), .fee-table td:nth-child(1) { width: 40px; padding: 0 4px; }
-    .fee-table th:nth-child(2), .fee-table td:nth-child(2) { width: 120px; }
-    .fee-table th:nth-child(3), .fee-table td:nth-child(3) { width: 160px; }
-    .fee-table th:nth-child(4), .fee-table td:nth-child(4) { width: 100px; }
-    .fee-table th:nth-child(5), .fee-table td:nth-child(5) { width: 90px; }
-    .fee-table th:nth-child(6), .fee-table td:nth-child(6) { width: 130px; }
-    .fee-table th:nth-child(7), .fee-table td:nth-child(7) { width: 120px; }
-    .fee-table th:nth-child(8), .fee-table td:nth-child(8) { width: 110px; }
-    .fee-table th:nth-child(9), .fee-table td:nth-child(9) { width: 110px; }
-    .fee-table th:nth-child(10), .fee-table td:nth-child(10) { width: 110px; }
-    #feeScrollContainer { overflow-x: hidden; }
+    /* 去掉半透明遮罩，让费用管理占满整个屏幕 */
+    #feeModalOverlay { background: transparent !important; backdrop-filter: none !important; align-items: stretch !important; justify-content: stretch !important; padding: 0 !important; }
+    /* 让 modal-box 占满视口，去掉圆角和居中限制 */
+    #feeModalOverlay .fee-modal-box {
+        max-width: none !important; width: 100vw !important;
+        max-height: none !important; height: 100vh !important;
+        border-radius: 0 !important; margin: 0 !important;
+        padding: 24px 32px !important;
+        display: flex !important; flex-direction: column !important;
+        overflow: hidden !important;
+        background: #0a143a !important;
+        border: 1px solid var(--glass-border) !important;
+    }
+    /* 表格容器占满剩余空间 */
+    #feeScrollContainer { flex: 1 1 auto !important; min-height: 0 !important; max-height: none !important; }
+    /* 用 fixed 布局 + 百分比，列宽由 thead 的 12 列决定 */
+    .fee-table { width: 100%; table-layout: fixed; }
+    .fee-table th, .fee-table td { overflow: hidden; text-overflow: ellipsis; word-wrap: break-word; }
+    /* 只对 thead 的 12 列设置宽度；tbody 的 td 自动对齐 */
+    .fee-table thead th:nth-child(1) { width: 3%; min-width: 32px; padding: 0 4px; }
+    .fee-table thead th:nth-child(2) { width: 9%; min-width: 84px; }
+    .fee-table thead th:nth-child(3) { width: 10%; min-width: 92px; }
+    .fee-table thead th:nth-child(4) { width: 7%; min-width: 64px; }
+    .fee-table thead th:nth-child(5) { width: 7%; min-width: 64px; }
+    .fee-table thead th:nth-child(6) { width: 7%; min-width: 64px; }
+    .fee-table thead th:nth-child(7) { width: 11%; min-width: 100px; }
+    .fee-table thead th:nth-child(8) { width: 10%; min-width: 90px; }
+    .fee-table thead th:nth-child(9) { width: 9%; min-width: 80px; }
+    .fee-table thead th:nth-child(10) { width: 7%; min-width: 60px; }
+    .fee-table thead th:nth-child(11) { width: 7%; min-width: 64px; }
+    .fee-table thead th:nth-child(12) { width: 10%; min-width: 90px; text-align: center !important; }
+    /* checkbox 列：表头 th 和数据 td 一致居中 */
+    .fee-table thead th:nth-child(1) { text-align: center !important; }
+    .fee-table td.ftd-chk { padding: 14px 12px !important; text-align: center !important; vertical-align: middle; }
+    .fee-table td.ftd-chk input, #settleSelectAll { width: 16px !important; height: 16px !important; max-width: 16px; margin: 0; cursor: pointer; accent-color: #38BDF8; }
+    /* 限制 feeScrollContainer 高度，让内部表格可滚动 */
+    #feeScrollContainer { 
+      flex: 1 1 auto !important; 
+      min-height: 0 !important; 
+      max-height: calc(100vh - 320px) !important; 
+      overflow: auto !important; 
+    }
     #userEmailSearchWrap { max-width: 100%; opacity: 1; flex: 1 1 220px; }
 }
 
@@ -1712,3 +1808,29 @@ input, textarea, select, .station-item label, #permAdminId {
 .task-progress-text { display: block; font-size: 0.72rem; color: var(--text-secondary); margin-top: 5px; text-align: right; }
 /* 移动端适配 */
 @media (max-width: 768px) { .task-progress-text { font-size: 0.68rem; } }
+/* 移动端 ftd-count 内的 daily-ranges（评论总数下一行） */
+.fee-table td.ftd-count .daily-ranges {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #94a3b8;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 6px;
+    cursor: help;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    justify-self: end;
+}
+.fee-table td.ftd-count .ftd-count-num { font-weight: 700; color: #00e5ff; font-size: 0.9rem; line-height: 1.2; }
+
+/* 桌面端 ftd-ranges td（区间日期列）—— 仅 PC 端生效 */
+@media (min-width: 769px) {
+    .fee-table td.ftd-ranges { padding: 16px 14px !important; font-size: 0.85rem; color: #94a3b8; vertical-align: middle; white-space: nowrap; }
+    .fee-table td.ftd-ranges .daily-ranges-cell { display: inline-block; padding: 3px 10px; font-size: 0.75rem; color: #94a3b8; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 6px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+    .fee-table td.ftd-ranges .ranges-label { color: #64748b; font-weight: 500; font-size: 0.7rem; margin-right: 4px; opacity: 0.85; }
+}
