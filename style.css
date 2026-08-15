@@ -32,14 +32,14 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* 稳定滚动条占位：防止内容高度变化导致滚动条出现/消失、视口宽度跳变，引起居中元素水平抖动 */
-html { scrollbar-gutter: stable; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+html { scrollbar-gutter: stable; }
 
 body {
     background: radial-gradient(ellipse at bottom, #1a1f3a 0%, #0d1230 55%, #080a1a 100%);
     background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-family);
-    min-height: 100vh; min-height: 100dvh;
+    min-height: 100vh;
     overflow-x: hidden;
     position: relative;
     padding-bottom: env(safe-area-inset-bottom);
@@ -147,7 +147,7 @@ body::after {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; min-height: 100dvh;
+    min-height: 100vh;
     position: relative;
     z-index: 2;
     overflow: hidden;
@@ -397,8 +397,8 @@ body::after {
 
 /* 统计卡片（翻转） */
 .stat-card {
-    position: relative;
     background: linear-gradient(135deg, rgba(0, 120, 240, 0.58) 0%, rgba(0, 50, 180, 0.72) 100%);
+    backdrop-filter: blur(15px);
     border: 1px solid rgba(0, 200, 255, 0.55);
     border-radius: 14px; padding: 0; text-align: center;
     box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 22px rgba(0, 150, 255, 0.35), inset 0 1px 0 rgba(255,255,255,0.18);
@@ -408,11 +408,6 @@ body::after {
     perspective: 800px;
     cursor: pointer;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-}
-/* 毛玻璃移至伪元素：避免 backdrop-filter 压平祖先的 3D 上下文导致翻转空白(iOS Safari 典型 bug) */
-.stat-card::before {
-    content: ""; position: absolute; inset: 0; border-radius: 14px; z-index: -1; pointer-events: none;
-    -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
 }
 
 .stat-card .flip-card {
@@ -495,7 +490,7 @@ body::after {
     cursor: default; flex: 1; min-width: 0;
     height: 80px;
     background: linear-gradient(135deg, rgba(0, 195, 210, 0.52) 0%, rgba(0, 110, 165, 0.68) 100%);
-    -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
     border: 1px solid rgba(0, 235, 225, 0.55);
     border-radius: 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 22px rgba(0, 210, 210, 0.3), inset 0 1px 0 rgba(255,255,255,0.18); transition: box-shadow 0.25s ease;
@@ -505,13 +500,14 @@ body::after {
 
 .date-range-card:hover { box-shadow: 0 0 30px rgba(0, 235, 225, 0.6), 0 8px 22px rgba(0,0,0,0.5), 0 0 50px rgba(0, 200, 200, 0.25); }
 
-.date-range-card .date-row { position: relative; display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; }
+.date-range-card .date-row { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; }
 .date-range-card label { font-size: 0.7rem; color: rgba(200, 245, 245, 0.92); letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; width: 30px; text-align: right; }
 .date-range-card input[type="date"] {
     background: transparent; border: none; color: #ffffff;
-    font-size: 0.9rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
+    font-size: 0.92rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
     cursor: pointer; font-family: var(--font-family); width: 100%; padding: 2px 4px;
-    outline: none; line-height: 1.2; letter-spacing: 0.5px; white-space: nowrap;
+    outline: none; line-height: 1.2; letter-spacing: 0.5px;
+    white-space: nowrap; overflow: hidden; text-overflow: clip;
 }
 .date-range-card input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8) sepia(1) saturate(5) hue-rotate(165deg); cursor: pointer; opacity: 0.8;
@@ -519,11 +515,6 @@ body::after {
 }
 .date-range-card input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: #ffffff; }
 .date-range-card input[type="date"]::-webkit-datetime-edit-text { color: rgba(200, 245, 245, 0.8); }
-/* 日期统一以 YYYY-MM-DD 文本显示，原生选择框透明覆盖其上（避免中文 locale 显示"2026年8月15日"换行） */
-.date-display { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; font-weight: 600; }
-.date-range-card .date-display { font-size: 0.7rem; letter-spacing: 0; text-shadow: 0 0 8px rgba(0,235,225,0.7); }
-.field-row .date-display, .date-input .date-display { font-size: 0.85rem; }
-.date-native-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none; background: transparent; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none; font-size: 16px; }
 
 /* ===== 5. 筛选栏 ===== */
 .filter-bar {
@@ -534,7 +525,7 @@ body::after {
     background: rgba(0,0,0,0.2);
     padding: 10px 14px;
     border-radius: 20px;
-    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     margin-bottom: 16px;
     position: relative;
     flex-shrink: 0;
@@ -579,7 +570,7 @@ body::after {
 /* ===== 7. 数据表格 ===== */
 .table-fixed-header {
     background: var(--panel-bg);
-    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 200, 255, 0.25);
     border-radius: 16px;
     overflow: visible;
@@ -622,7 +613,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 }
 .toast {
     padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px;
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px); background: rgba(0,0,0,0.8);
     border: 1px solid var(--glass-border); animation: slideIn 0.3s ease; flex-shrink: 0;
 }
 .toast.error { border-left: 4px solid var(--danger); }
@@ -637,7 +628,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 /* ===== 9. 弹窗基础 ===== */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); z-index: 1000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000;
     display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
 }
 
@@ -648,7 +639,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     padding: 30px;
     max-width: 90vw;
     width: 800px;
-    max-height: 90vh; max-height: 90dvh;
+    max-height: 90vh;
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6);
@@ -683,7 +674,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .modal-header-flex .close-btn { position: static !important; float: none !important; }
 .modal-header-flex h3 { margin: 0; }
 
-.field-row { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .field-row label { width: 100px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
 .field-row select, .field-row input {
     flex: 1; min-width: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
@@ -730,7 +721,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     display: flex; align-items: center; gap: 12px;
     background: linear-gradient(135deg, rgba(0, 140, 255, 0.6) 0%, rgba(130, 0, 230, 0.58) 100%);
     border: 1px solid rgba(0, 200, 255, 0.55); padding: 4px 18px 4px 22px; border-radius: 40px;
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), 0 0 24px rgba(0, 160, 255, 0.35);
+    backdrop-filter: blur(8px); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18), 0 0 24px rgba(0, 160, 255, 0.35);
     flex-shrink: 0;
 }
 .mode-stats-label { color: rgba(210, 240, 255, 0.95); font-size: 0.85rem; letter-spacing: 1px; white-space: nowrap; }
@@ -746,7 +737,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
 .date-range-panel { display: flex; flex-direction: row; gap: 20px; align-items: flex-end; margin-bottom: 20px; flex-wrap: nowrap; }
-.date-input { position: relative; flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
+.date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
 .date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: 80px; text-align: right; }
 .date-input input { flex: 1; min-width: 0; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; }
 .batch-action-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; }
@@ -861,7 +852,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
 /* 工具栏 */
 .fee-toolbar-container { margin-bottom: 12px; }
-.fee-toolbar-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.fee-toolbar-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: nowrap; }
 .fee-toolbar-row:last-child { margin-bottom: 0; }
 .fee-toolbar-row input, .fee-toolbar-row button {
     box-sizing: border-box; height: 44px; font-size: 14px; font-family: inherit;
@@ -889,8 +880,8 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .fee-tab.active { background: var(--accent); border-color: var(--accent); color: #000; }
 
 /* 结算工具栏 */
-.settle-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-.settle-toolbar .settle-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1 1 100%; min-width: 0; }
+.settle-toolbar { display: flex; gap: 8px; flex-wrap: nowrap; align-items: center; margin-bottom: 12px; }
+.settle-toolbar .settle-left { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; flex: 1; min-width: 0; }
 .settle-toolbar label {
     box-sizing: border-box; height: 44px; font-size: 14px; font-family: inherit;
     color: #fff; background: rgba(255,23,68,0.55);
@@ -933,7 +924,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .fee-table thead th {
   position: sticky; top: 0; z-index: 10;
   background: rgba(15,20,45,0.98) !important;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   padding: 14px 12px !important;
   font-size: 0.78rem !important; font-weight: 600;
   color: #94a3b8 !important;
@@ -1009,7 +1000,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .prepay-bal { font-weight: 600; color: var(--neon-cyan); font-size: 0.86rem; }
 .prepay-bal.zero { color: rgba(148,163,184,0.5); font-weight: 400; }
 /* 弹窗宽度自适应屏幕（min() 取两者较小值：820px 封顶、屏幕宽 94%） */
-.prepay-modal { background: var(--panel-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 20px; width: min(820px, 94vw); max-width: 94vw; max-height: 86vh; max-height: 86dvh; overflow-y: auto; overflow-x: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
+.prepay-modal { background: var(--panel-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 20px; width: min(820px, 94vw); max-width: 94vw; max-height: 86vh; overflow-y: auto; overflow-x: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
 /* 预收款表：固定布局铺满弹窗内容区，列宽按比例分配，8 列（含"删除"操作列）始终完整可见，不产生横向截断；
    备注列占剩余宽度（省略号 + title 提示），其余列固定宽度 */
 .prepay-modal .fee-table { table-layout: fixed; width: 100%; min-width: 0; }
@@ -1126,7 +1117,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         overflow-x: hidden;
     }
     #loginSection {
-        min-height: 100vh; min-height: 100dvh;
+        min-height: 100vh;
         min-height: 100dvh; /* 适配移动端地址栏折叠 */
         padding: 10px;
     }
@@ -1140,15 +1131,15 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .login-geom-ring:nth-child(3) { width: 270px; height: 270px; }
     .title { font-size: 1.2rem; }
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 4px 8px; font-size: 0.65rem; letter-spacing: 1px; }
-    .top-bar { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .top-bar { flex-direction: row; flex-wrap: nowrap; gap: 6px; }
     .stat-card { height: 70px; min-width: 0; flex: 1; }
     .stat-card .number { font-size: 1.2rem; }
     .stat-card .label { font-size: 0.6rem; letter-spacing: 0.5px; }
     .date-range-card { height: 70px; min-width: 0; flex: 1; padding: 2px 4px; gap: 1px; }
     .date-range-card label { font-size: 0.55rem; width: 24px; }
-    .date-range-card input[type="date"] { font-size: 0.7rem !important; padding: 1px 2px; letter-spacing: 0; }
+    .date-range-card input[type="date"] { font-size: 0.8rem; padding: 1px 2px; }
     .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 12px; height: 12px; }
-    .filter-bar { flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
+    .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
     .filter-bar .filter-input { flex: 1; min-width: 0; }
     .filter-bar label { font-size: 0.65rem; gap: 4px; flex-wrap: nowrap !important; }
     .filter-bar input, .filter-bar button { height: 34px; line-height: 32px; padding: 0 10px; font-size: 0.75rem; box-sizing: border-box; }
@@ -1165,7 +1156,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
     .batch-controls { gap: 4px; justify-content: center; }
     .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
-    .station-list { max-height: 45vh; max-height: 45dvh; min-height: 120px; }
+    .station-list { max-height: 45vh; min-height: 120px; }
     .station-item label { font-size: 0.9rem; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
     .count-value { min-width: 24px; }
 
@@ -1187,15 +1178,15 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         box-shadow: inset 0 3px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(0,243,255,0.15);
         text-shadow: 0 0 8px rgba(0,243,255,0.2);
     }
-    .mode-stats-card { flex-shrink: 0; padding: 2px 8px 2px 10px !important; gap: 4px !important; display: flex; overflow: visible; }
+    .mode-stats-card { flex-shrink: 0; padding: 2px 8px 2px 10px !important; gap: 4px !important; display: flex; }
     .mode-stats-label { font-size: 0.55rem !important; }
-    .mode-stats-number { font-size: 1.2rem !important; transform: none !important; text-shadow: 0 0 8px rgba(0, 220, 255, 0.7), 1px 1px 0 #000; letter-spacing: -0.5px; }
+    .mode-stats-number { font-size: 1.4rem !important; }
 
     /* 日期强制一行 */
     .date-range-panel { flex-wrap: nowrap !important; gap: 6px; align-items: center; width: 100%; }
-    .date-input { width: auto !important; flex: 1; padding: 2px 6px !important; border-radius: 8px; box-sizing: border-box; min-width: 0; }
-    .date-input label { width: auto !important; font-size: 0.7rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
-    .date-input input { height: 28px !important; padding: 0 4px; font-size: 16px !important; line-height: 28px !important; min-width: 40px; background: transparent !important; }
+    .date-input { width: auto !important; flex: 1; padding: 4px 10px; border-radius: 8px; box-sizing: border-box; min-width: 0; }
+    .date-input label { width: auto !important; font-size: 0.75rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
+    .date-input input { height: 32px; padding: 0 4px; font-size: 0.8rem !important; line-height: normal; min-width: 40px; background: transparent !important; }
 
     .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
     .batch-action-buttons { flex-wrap: nowrap !important; }
@@ -1203,15 +1194,14 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .field-row { flex-wrap: nowrap; gap: 4px; margin-bottom: 8px; }
     .field-row label { width: 70px; white-space: nowrap; font-size: 0.65rem; }
     .field-row select, .field-row input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 4px; font-size: 0.7rem; }
-    .field-row input[type="date"] { height: 28px !important; padding: 0 4px; font-size: 16px !important; line-height: 28px !important; }
-    .field-row .date-display, .date-input .date-display { font-size: 0.7rem !important; }
+    .field-row input[type="date"] { height: 30px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
     .field-group { flex-wrap: nowrap; gap: 4px; }
     .fuel-section, .cardno-section { flex-direction: row; gap: 4px; }
     .fuel-section > label, .cardno-section > label { width: 70px; font-size: 0.65rem; }
     .fuel-preset-btn { padding: 0 8px; font-size: 0.55rem; border-radius: 10px; height: 30px; line-height: 30px; }
     .fuel-mapping-entry, .cardno-entry { gap: 3px; margin-bottom: 0; }
     .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 28px; line-height: 26px; padding: 0 4px; font-size: 0.7rem; }
-    .fuel-mapping-entry input[type="date"] { height: 28px !important; padding: 0 4px; font-size: 16px !important; line-height: 28px !important; }
+    .fuel-mapping-entry input[type="date"] { height: 28px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
     .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 22px; height: 22px; }
     .admin-field label { width: 50px; font-size: 0.7rem; }
     .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
@@ -1224,11 +1214,11 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .unsettled-hero-btn { padding: 5px 12px; font-size: 0.78rem; margin-top: 6px; }
     .fee-table th, .fee-table td { padding: 3px 2px; font-size: 0.66rem; }
     .settle-submodal { width: 96vw; padding: 14px; }
-    .settle-submodal { width: 96vw !important; max-width: 96vw !important; max-height: 92vh !important; max-height: 92dvh !important; overflow-y: auto !important; padding: 16px !important; margin: 4vh auto !important; }
+    .settle-submodal { width: 96vw !important; max-width: 96vw !important; max-height: 92vh !important; overflow-y: auto !important; padding: 16px !important; margin: 4vh auto !important; }
     .settle-submodal .actions { margin-top: 16px !important; display: flex !important; gap: 10px !important; flex-wrap: wrap !important; }
     .settle-submodal .actions button { flex: 1 1 0 !important; min-width: 110px !important; height: 44px !important; padding: 10px 18px !important; font-size: 0.95rem !important; margin: 0 !important; white-space: nowrap !important; }
     .settle-submodal .field-row input, .settle-submodal .field-row select { font-size: 16px !important; height: 42px !important; }
-    .modal.le-submodal { width: 96vw !important; max-width: 96vw !important; max-height: 90vh !important; max-height: 90dvh !important; height: auto !important; overflow-y: auto !important; padding: 16px !important; margin: 5vh auto !important; }
+    .modal.le-submodal { width: 96vw !important; max-width: 96vw !important; max-height: 90vh !important; height: auto !important; overflow-y: auto !important; padding: 16px !important; margin: 5vh auto !important; }
     .modal.le-submodal h4 { font-size: 1.1rem; margin-bottom: 12px; }
     .modal.le-submodal .field-row { margin-bottom: 10px; flex-wrap: wrap; }
     .modal.le-submodal .field-row label { width: 100%; margin-bottom: 4px; }
@@ -1240,7 +1230,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     #prepayOverlay .prepay-modal {
         width: 100vw !important; max-width: 100vw !important;
         width: 100dvw !important;
-        height: 100vh !important; height: 100dvh !important; max-height: 100vh !important; max-height: 100dvh !important;
+        height: 100vh !important; max-height: 100vh !important;
         height: 100dvh !important; max-height: 100dvh !important;
         border-radius: 0 !important; margin: 0 !important;
         padding: 14px 14px calc(14px + env(safe-area-inset-bottom)) !important;
@@ -1377,7 +1367,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .settle-toolbar #settleHint { display: none; }
 
     /* 表格内部竖向滚动（自适应高度约10条），触底/触顶后滚动传递到页面 */
-    .tbody-container { touch-action: pan-y; -webkit-overflow-scrolling: touch; max-height: 38vh !important; max-height: 38dvh !important; overflow-y: auto !important; overflow-x: auto !important; }
+    .tbody-container { touch-action: pan-y; -webkit-overflow-scrolling: touch; max-height: 38vh !important; overflow-y: auto !important; overflow-x: auto !important; }
     .thead-container { overflow: hidden !important; touch-action: pan-y; }
     .table-fixed-header { overflow: visible !important; }
     html { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
@@ -1474,7 +1464,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .fee-table td.ftd-code { flex: 0 0 auto; padding: 5px 10px 5px 12px !important; white-space: nowrap; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 700; color: #f1f5f9; font-size: 0.86rem; min-width: 0; overflow: visible !important; }
     .fee-table td.ftd-code::before { display: none; }
     /* 站名：占剩余空间，长站名不截断 */
-    .fee-table td.ftd-name { flex: 1 1 0; min-width: 0; padding: 5px 6px 5px 4px !important; white-space: normal; overflow-wrap: anywhere; word-break: break-word; font-weight: 600; color: #f1f5f9; font-size: 0.86rem; }
+    .fee-table td.ftd-name { flex: 1 1 0; min-width: 0; padding: 5px 6px 5px 4px !important; white-space: nowrap; font-weight: 600; color: #f1f5f9; font-size: 0.86rem; overflow: visible !important; }
     .fee-table td.ftd-name::before { display: none; }
     .fee-table td.ftd-enabled { flex: 0 0 70px; display: flex; flex-direction: row; align-items: center; justify-content: flex-end; padding: 5px 6px 5px 4px !important; font-size: 0.7rem !important; white-space: nowrap; min-width: 0; min-height: 30px; }
     .fee-table td.ftd-enabled::before { display: none; }
@@ -1517,7 +1507,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .fee-table tr.fee-total-row td.ftd-total-info { grid-column: 1 / -1; }
     .fee-table tr.fee-total-row td.ftd-total-label { order: 0; font-weight: bold; text-align: left !important; }
     .fee-table tr.fee-total-row td.ftd-total-label::before { display: none; }
-    .fee-table tr.fee-total-row td.ftd-total-info { order: 99; color: #ffb3b3; flex: 0 0 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.4; }
+    .fee-table tr.fee-total-row td.ftd-total-info { order: 99; color: #ffb3b3; }
     .fee-table tr.fee-total-row td.ftd-total-info::before { display: none; }
     /* 合计行三项金额统一整行右对齐，值右边缘一致（与 全价费用/阶梯费用 对齐） */
     .fee-table tr.fee-total-row td.ftd-full,
@@ -1581,9 +1571,9 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
 /* ===== 21. 横屏移动端 ===== */
 @media (max-width: 768px) and (orientation: landscape) {
-    .modal { max-height: 95vh; max-height: 95dvh; }
-    .station-list { max-height: 35vh; max-height: 35dvh; }
-    .login-box { max-height: 90vh; max-height: 90dvh; overflow-y: auto; }
+    .modal { max-height: 95vh; }
+    .station-list { max-height: 35vh; }
+    .login-box { max-height: 90vh; overflow-y: auto; }
 }
 
 /* ===== 22. PC 费用管理全屏（≥769px） —— 不再用 modal 挤在中间 ===== */
@@ -1593,7 +1583,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     /* 让 modal-box 占满视口，去掉圆角和居中限制 */
     #feeModalOverlay .fee-modal-box {
         max-width: none !important; width: 100vw !important;
-        max-height: none !important; height: 100vh !important; height: 100dvh !important;
+        max-height: none !important; height: 100vh !important;
         border-radius: 0 !important; margin: 0 !important;
         padding: 24px 32px !important;
         display: flex !important; flex-direction: column !important;
@@ -1627,7 +1617,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     #feeScrollContainer { 
       flex: 1 1 auto !important; 
       min-height: 0 !important; 
-      max-height: calc(100vh - 320px) !important; max-height: calc(100dvh - 320px) !important; 
+      max-height: calc(100vh - 320px) !important; 
       overflow: auto !important; 
     }
     #userEmailSearchWrap { max-width: 100%; opacity: 1; flex: 1 1 220px; }
@@ -1731,8 +1721,7 @@ input, textarea, select, .station-item label, #permAdminId {
     .toast-container { top: 10px; left: 50%; right: auto; transform: translateX(-50%); width: 92vw; max-width: 400px; align-items: center; }
     .toast { width: 100%; font-size: 13px; padding: 10px 16px; text-align: center; border-radius: 10px; }
     .close-btn { font-size: 1.8rem; padding: 8px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .modal { padding: 16px 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); width: 96vw; max-height: 92vh; max-height: 92dvh; border-radius: 14px; overflow-x: hidden; }
-    .modal *, .prepay-modal * { min-width: 0; }
+    .modal { padding: 16px 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); width: 96vw; max-height: 92vh; border-radius: 14px; }
     .modal h3 { font-size: 1.05rem; margin-bottom: 8px; }
     .modal button { min-height: 36px; }
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 6px 10px; font-size: 0.7rem; min-height: 34px; border-radius: 8px; }
@@ -1755,7 +1744,7 @@ input, textarea, select, .station-item label, #permAdminId {
     #adminModalOverlay, #configModalOverlay, #feeModalOverlay { padding: 0 !important; align-items: stretch !important; }
     #adminModalOverlay .modal, #configModalOverlay .modal, #feeModalOverlay .modal {
         width: 100vw !important; max-width: 100vw !important;
-        width: 100dvw !important; height: 100vh !important; height: 100dvh !important; max-height: 100vh !important; max-height: 100dvh !important;
+        width: 100dvw !important; height: 100vh !important; max-height: 100vh !important;
         height: 100dvh !important; max-height: 100dvh !important;
         border-radius: 0 !important; margin: 0 !important;
         padding: 14px 14px calc(14px + env(safe-area-inset-bottom)) !important;
@@ -1778,7 +1767,7 @@ input, textarea, select, .station-item label, #permAdminId {
         display: flex !important; flex-direction: column !important;
         flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important;
     }
-    #configModalOverlay .station-list { max-height: 40vh !important; max-height: 40dvh !important; flex: 1 1 auto; min-height: 120px; }
+    #configModalOverlay .station-list { max-height: 40vh !important; flex: 1 1 auto; min-height: 120px; }
 
     /* 主表格 —— 移动端 flex 布局，表格体限制高度内部滚动 */
     .table-fixed-header { display: flex !important; flex-direction: column !important; overflow: visible !important; }
@@ -1786,7 +1775,7 @@ input, textarea, select, .station-item label, #permAdminId {
         mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
         -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
         touch-action: pan-y; -webkit-overflow-scrolling: touch;
-        max-height: 38vh !important; max-height: 38dvh !important; overflow-y: auto !important; overflow-x: auto !important;
+        max-height: 38vh !important; overflow-y: auto !important; overflow-x: auto !important;
         flex: 1 1 auto !important;
     }
     .thead-container { overflow: hidden !important; touch-action: pan-y; flex-shrink: 0 !important; }
@@ -1851,9 +1840,4 @@ input, textarea, select, .station-item label, #permAdminId {
     .fee-table td.ftd-ranges { padding: 16px 14px !important; font-size: 0.85rem; color: #94a3b8; vertical-align: middle; white-space: nowrap; }
     .fee-table td.ftd-ranges .daily-ranges-cell { display: inline-block; padding: 3px 10px; font-size: 0.75rem; color: #94a3b8; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 6px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
     .fee-table td.ftd-ranges .ranges-label { color: #64748b; font-weight: 500; font-size: 0.7rem; margin-right: 4px; opacity: 0.85; }
-}
-
-/* ===== 跨平台收口：移动端所有表单控件 ≥16px，避免 iOS Safari 聚焦输入框时整页自动放大 ===== */
-@media (max-width: 960px) {
-    input, textarea, select { font-size: 16px !important; }
 }
