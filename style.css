@@ -40,9 +40,7 @@ body {
     color: var(--text-primary);
     font-family: var(--font-family);
     min-height: 100vh;
-    min-height: 100dvh;
     overflow-x: hidden;
-    touch-action: manipulation;
     position: relative;
     padding-bottom: env(safe-area-inset-bottom);
 }
@@ -150,7 +148,6 @@ body::after {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    min-height: 100dvh;
     position: relative;
     z-index: 2;
     overflow: hidden;
@@ -507,10 +504,9 @@ body::after {
 .date-range-card label { font-size: 0.7rem; color: rgba(200, 245, 245, 0.92); letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; width: 30px; text-align: right; }
 .date-range-card input[type="date"] {
     background: transparent; border: none; color: #ffffff;
-    font-size: 0.92rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
+    font-size: 1rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
     cursor: pointer; font-family: var(--font-family); width: 100%; padding: 2px 4px;
-    outline: none; line-height: 1.2; letter-spacing: 0.5px;
-    white-space: nowrap; overflow: hidden; text-overflow: clip;
+    outline: none; line-height: 1.2; letter-spacing: 1px;
 }
 .date-range-card input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8) sepia(1) saturate(5) hue-rotate(165deg); cursor: pointer; opacity: 0.8;
@@ -630,7 +626,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
 /* ===== 9. 弹窗基础 ===== */
 .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000;
     display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
 }
@@ -643,7 +639,6 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     max-width: 90vw;
     width: 800px;
     max-height: 90vh;
-    max-height: 90dvh;
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: var(--border-glow), 0 10px 30px rgba(0,0,0,0.6);
@@ -1371,7 +1366,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .settle-toolbar #settleHint { display: none; }
 
     /* 表格内部竖向滚动（自适应高度约10条），触底/触顶后滚动传递到页面 */
-    .tbody-container { touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; max-height: 38vh !important; overflow-y: auto !important; overflow-x: auto !important; }
+    .tbody-container { touch-action: pan-y; -webkit-overflow-scrolling: touch; max-height: 38vh !important; overflow-y: auto !important; overflow-x: auto !important; }
     .thead-container { overflow: hidden !important; touch-action: pan-y; }
     .table-fixed-header { overflow: visible !important; }
     html { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
@@ -1622,7 +1617,6 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
       flex: 1 1 auto !important; 
       min-height: 0 !important; 
       max-height: calc(100vh - 320px) !important; 
-      max-height: calc(100dvh - 320px) !important; 
       overflow: auto !important; 
     }
     #userEmailSearchWrap { max-width: 100%; opacity: 1; flex: 1 1 220px; }
@@ -1779,7 +1773,7 @@ input, textarea, select, .station-item label, #permAdminId {
     .tbody-container {
         mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
         -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-        touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;
+        touch-action: pan-y; -webkit-overflow-scrolling: touch;
         max-height: 38vh !important; overflow-y: auto !important; overflow-x: auto !important;
         flex: 1 1 auto !important;
     }
