@@ -500,12 +500,12 @@ body::after {
 
 .date-range-card:hover { box-shadow: 0 0 30px rgba(0, 235, 225, 0.6), 0 8px 22px rgba(0,0,0,0.5), 0 0 50px rgba(0, 200, 200, 0.25); }
 
-.date-range-card .date-row { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; }
+.date-range-card .date-row { display: flex; align-items: center; gap: 2px; width: 100%; justify-content: center; flex-wrap: nowrap; }
 .date-range-card label { font-size: 0.7rem; color: rgba(200, 245, 245, 0.92); letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; width: 30px; text-align: right; }
 .date-range-card input[type="date"] {
     background: transparent; border: none; color: #ffffff;
     font-size: 1rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
-    cursor: pointer; font-family: var(--font-family); width: 100%; padding: 2px 4px;
+    cursor: pointer; font-family: var(--font-family); width: 100%; min-width: 0; padding: 2px 4px;
     outline: none; line-height: 1.2; letter-spacing: 1px;
 }
 .date-range-card input[type="date"]::-webkit-calendar-picker-indicator {
@@ -1135,8 +1135,8 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .stat-card .number { font-size: 1.2rem; }
     .stat-card .label { font-size: 0.6rem; letter-spacing: 0.5px; }
     .date-range-card { height: 70px; min-width: 0; flex: 1; padding: 2px 4px; gap: 1px; }
-    .date-range-card label { font-size: 0.55rem; width: 24px; }
-    .date-range-card input[type="date"] { font-size: 0.8rem; padding: 1px 2px; }
+    .date-range-card label { font-size: 0.5rem; width: 20px; flex-shrink: 0; }
+    .date-range-card input[type="date"] { font-size: 0.68rem; padding: 0 1px; min-width: 0; }
     .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 12px; height: 12px; }
     .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
     .filter-bar .filter-input { flex: 1; min-width: 0; }
@@ -1560,7 +1560,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 5px 8px; font-size: 0.62rem; letter-spacing: 0.5px; }
     .stat-card .number { font-size: 1rem; }
     .stat-card .label { font-size: 0.55rem; }
-    .date-range-card input[type="date"] { font-size: 0.72rem; }
+    .date-range-card input[type="date"] { font-size: 0.58rem; }
     .filter-bar { padding: 4px 6px; gap: 3px; }
     .filter-bar input, .filter-bar button { height: 32px; font-size: 0.7rem; padding: 0 8px; }
     .date-range-panel .date-input { flex: 1 1 100%; }
