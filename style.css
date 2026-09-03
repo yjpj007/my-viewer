@@ -505,8 +505,9 @@ body::after {
 .date-range-card input[type="date"] {
     background: transparent; border: none; color: #ffffff;
     font-size: 1rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
-    cursor: pointer; font-family: var(--font-family); width: 100%; min-width: 0; padding: 2px 4px;
-    outline: none; line-height: 1.2; letter-spacing: 1px;
+    cursor: pointer; font-family: var(--font-family); width: 100%; min-width: 110px; padding: 2px 4px;
+    outline: none; line-height: 1.2; letter-spacing: 0.5px;
+    -webkit-appearance: none; appearance: none;
 }
 .date-range-card input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8) sepia(1) saturate(5) hue-rotate(165deg); cursor: pointer; opacity: 0.8;
@@ -514,6 +515,34 @@ body::after {
 }
 .date-range-card input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: #ffffff; }
 .date-range-card input[type="date"]::-webkit-datetime-edit-text { color: rgba(200, 245, 245, 0.8); }
+
+/* ----- 全局 date/month 输入框健壮化：解决 Android WebView 截断、iOS 缩放等问题 ----- */
+input[type="date"], input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: var(--font-family);
+    /* 禁止浏览器自动缩放时产生截断，最小可读字号 */
+    font-size: 0.95rem;
+    /* 保证完整日期（如 2026/09/03 或 2026年9月3日）能被渲染出来 */
+    min-width: 120px;
+    letter-spacing: 0;
+    text-align: left;
+    /* 为日历指示器留出足够空间，不被内容挤掉 */
+    padding-right: 28px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+    opacity: 0.8;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+input[type="date"]:focus, input[type="month"]:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 0 2px rgba(0, 220, 255, 0.15);
+    outline: none;
+}
 
 /* ===== 5. 筛选栏 ===== */
 .filter-bar {
@@ -649,6 +678,18 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
 .modal h3 { color: var(--neon-blue); margin-bottom: 20px; font-size: 1.5rem; }
 
+/* disabled / readonly 输入框必须可见，避免浏览器默认黑底 */
+.modal input:disabled,
+.modal select:disabled,
+.modal input[readonly],
+.modal select[readonly] {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.65);
+    -webkit-text-fill-color: rgba(255,255,255,0.65);
+    border-color: rgba(255,255,255,0.22);
+    opacity: 1;
+}
+
 .modal input, .modal select, .modal textarea {
     line-height: 42px; height: 42px; box-sizing: border-box; width: 100%; margin: 8px 0;
     background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px;
@@ -674,7 +715,11 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .modal-header-flex h3 { margin: 0; }
 
 .field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.field-row label { width: 100px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+/* 全局表单 label 宽度体系：PC 72px / 移动端 66px（由 .modal 上的 --flw 变量控制），
+   所有 label 等宽右对齐——两字「开始」与四字「已用次数」占用空间完全一致，输入框左边缘严格对齐 */
+.modal { --flw: 72px; }
+.lock-icon { font-size: 12px; }
+.field-row label { width: var(--flw, 72px); flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; text-align: right; }
 .field-row select, .field-row input {
     flex: 1; min-width: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
     border-radius: 8px; color: white; padding: 0 12px; height: 42px; font-size: 0.9rem; line-height: 42px;
@@ -685,8 +730,8 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 
 .fuel-section, .cardno-section { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
 .fuel-section > label, .cardno-section > label {
-    width: 100px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary);
-    white-space: nowrap; padding-top: 8px;
+    width: var(--flw, 72px); flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary);
+    white-space: nowrap; padding-top: 8px; text-align: right;
 }
 .fuel-editor-container, .cardno-editor-container { flex: 1; }
 
@@ -736,9 +781,9 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
 .date-range-panel { display: flex; flex-direction: row; gap: 20px; align-items: flex-end; margin-bottom: 20px; flex-wrap: nowrap; }
-.date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
-.date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: 80px; text-align: right; }
-.date-input input { flex: 1; min-width: 0; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; }
+.date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); min-width: 0; }
+.date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: var(--flw, 72px); text-align: right; }
+.date-input input { flex: 1; min-width: 110px; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; font-size: 0.95rem; }
 .batch-action-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; }
 .edit-create-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
 
@@ -802,7 +847,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
 .admin-field { display: flex; align-items: center; gap: 8px; }
-.admin-field label { width: 50px; flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); }
+.admin-field label { width: var(--flw, 72px); flex-shrink: 0; font-size: 0.85rem; color: var(--text-secondary); text-align: right; }
 .admin-field input { flex: 1; min-width: 0; }
 
 .lock-icon { cursor: pointer; font-size: 1.2rem; margin-left: 4px; user-select: none; }
@@ -984,7 +1029,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .calc-panel.active { display: block; }
 #feeModalOverlay.tab-predict-active #panelStats { display: none !important; }
 .calc-field-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
-.calc-field-row label { flex-shrink: 0; min-width: 80px; color: var(--text-secondary); }
+.calc-field-row label { flex-shrink: 0; width: var(--flw, 72px); color: var(--text-secondary); text-align: right; }
 .calc-field-row input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.08); color: #fff; }
 .calc-results { margin-top: 15px; padding: 12px; background: rgba(0,243,255,0.05); border-radius: 8px; }
 .calc-results div { margin: 6px 0; display: flex; justify-content: space-between; }
@@ -1026,7 +1071,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .settle-submodal { background: var(--panel-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 24px; width: min(560px, 92vw); max-width: 560px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 .settle-submodal h4 { color: var(--neon-blue); margin-bottom: 14px; }
 .settle-submodal .field-row { margin-bottom: 10px; }
-.settle-submodal .field-row label { width: 84px; }
+.settle-submodal .field-row label { width: var(--flw, 72px); text-align: right; }
 .settle-submodal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 .settle-submodal select { background-color: #1e293b !important; }
 .settle-submodal .prepay-row { background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.25); }
@@ -1041,7 +1086,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 }
 .le-submodal h4 { color: var(--neon-blue); margin-bottom: 16px; font-size: 1.25rem; }
 .le-submodal .field-row { margin-bottom: 12px; display: flex; align-items: center; }
-.le-submodal .field-row label { width: 90px; flex-shrink: 0; }
+.le-submodal .field-row label { width: var(--flw, 72px); flex-shrink: 0; text-align: right; }
 .le-submodal .field-row input, .le-submodal .field-row select { flex: 1; height: 36px; }
 .le-submodal .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
 .le-submodal .actions button { padding: 10px 22px; height: 40px; font-size: 0.9rem; }
@@ -1130,28 +1175,54 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .login-geom-ring:nth-child(3) { width: 270px; height: 270px; }
     .title { font-size: 1.2rem; white-space: nowrap; } .user-email-in-title { font-size: 0.72rem; margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42vw; display: inline-block; vertical-align: middle; }
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 4px 8px; font-size: 0.65rem; letter-spacing: 1px; }
-    .top-bar { flex-direction: row; flex-wrap: nowrap; gap: 6px; }
+    .top-bar { flex-direction: row; flex-wrap: nowrap; gap: 6px; align-items: stretch; }
+    /* 三个顶部卡片严格均分 */
     .stat-card { height: 70px; min-width: 0; flex: 1; }
-    .stat-card .number { font-size: 1.2rem; }
+    .stat-card .number { font-size: 1.1rem; }
     .stat-card .label { font-size: 0.6rem; letter-spacing: 0.5px; }
-    .date-range-card { height: 70px; min-width: 0; flex: 1; padding: 2px 4px; gap: 1px; }
-    .date-range-card label { font-size: 0.5rem; width: 20px; flex-shrink: 0; }
-    .date-range-card input[type="date"] { font-size: 0.56rem; padding: 0; min-width: 0; letter-spacing: 0; }
-    .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 12px; height: 12px; }
-    .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
-    .filter-bar .filter-input { flex: 1; min-width: 0; }
-    .filter-bar label { font-size: 0.65rem; gap: 4px; flex-wrap: nowrap !important; }
+    .date-range-card {
+        height: auto; min-height: 70px; min-width: 0; flex: 1;
+        padding: 2px 3px; gap: 1px; overflow: hidden;
+    }
+    .date-range-card .date-row { gap: 1px; }
+    .date-range-card label { font-size: 0.52rem; width: 12px; flex-shrink: 0; text-align: center; }
+    .date-range-card input[type="date"] {
+        font-size: 0.56rem !important; padding: 0 1px; padding-right: 9px; min-width: 0; letter-spacing: 0;
+        text-align: center; line-height: 1.2; box-sizing: border-box; max-width: 100%;
+    }
+    .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 7px; height: 7px; flex-shrink: 0; padding: 0; margin: 0 1px 0 0; }
+    /* 筛选栏移动端：标签独占一行；搜索框与「查询/重置」强制同一行，不换行 */
+    .filter-bar { flex-wrap: wrap; gap: 6px; padding: 6px 8px; }
+    .filter-bar .filter-input { display: contents; }
+    .filter-bar .filter-input > label { flex: 1 1 100%; font-size: 0.7rem; gap: 4px; white-space: nowrap; overflow: visible; }
+    .filter-bar .filter-input > input { flex: 1 1 auto; min-width: 0; width: auto; }
     .filter-bar input, .filter-bar button { height: 34px; line-height: 32px; padding: 0 10px; font-size: 0.75rem; box-sizing: border-box; }
-    .filter-bar button { line-height: 34px; }
-    .filter-bar .live-clock { font-size: 0.65rem; flex-shrink: 0; }
+    .filter-bar button { line-height: 34px; flex: 0 0 auto; padding: 0 12px; white-space: nowrap; }
+    .filter-bar .live-clock { font-size: 0.7rem; flex-shrink: 0; }
     .summary-inline { font-size: 0.7rem; white-space: normal; word-break: break-word; text-align: center; }
     .thead-container table, .tbody-container table { table-layout: fixed !important; min-width: 1000px; }
     th, td { padding: 6px 2px; font-size: 0.85rem; }
-    .modal { padding: 12px; width: 95%; }
+    .modal { padding: 12px; width: 95%; border-color: rgba(0,200,255,0.35); }
     .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
-    .modal input:not([type="date"]), .modal textarea { height: 32px; line-height: 30px; padding: 0 6px; font-size: 0.7rem; }
-    .modal input[type="date"] { height: 32px; padding: 0 6px; font-size: 0.7rem; line-height: normal; }
-    .modal button { padding: 4px 10px; font-size: 0.65rem; margin: 3px 2px 0 0; height: 32px; }
+    /* 移动端弹窗输入框统一高度、字号与边框，disabled 也能看见 */
+    .modal input:not([type="date"]), .modal select, .modal textarea { height: 34px; line-height: 32px; padding: 0 8px; font-size: 14px; }
+    .modal input[type="date"] {
+        height: 34px; padding: 0 8px; font-size: 14px; line-height: normal;
+        min-width: 96px; letter-spacing: 0; text-align: left;
+        -webkit-appearance: none; appearance: none;
+    }
+    .modal button { padding: 4px 10px; font-size: 0.7rem; margin: 3px 2px 0 0; height: 34px; }
+    /* disabled 输入框在移动端保持可见边框与浅字，不要黑底 */
+    .modal input:disabled, .modal select:disabled,
+    .field-row input:disabled, .field-row select:disabled,
+    .field-group.date-group-mobile-stack input:disabled,
+    .date-range-panel.date-range-mobile-stack input:disabled {
+        background: rgba(255,255,255,0.06) !important;
+        color: rgba(255,255,255,0.6) !important;
+        -webkit-text-fill-color: rgba(255,255,255,0.6) !important;
+        border-color: rgba(255,255,255,0.22) !important;
+        opacity: 1 !important;
+    }
 
     .batch-controls { gap: 4px; justify-content: center; }
     .batch-controls button { flex: 1; min-width: 60px; font-size: 0.6rem; padding: 4px; height: 30px; }
@@ -1181,28 +1252,53 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .mode-stats-label { font-size: 0.55rem !important; }
     .mode-stats-number { font-size: 1.4rem !important; }
 
-    /* 日期强制一行 */
+    /* 日期强制一行（普通 batch 面板保持并排，但给足宽度） */
     .date-range-panel { flex-wrap: nowrap !important; gap: 6px; align-items: center; width: 100%; }
-    .date-input { width: auto !important; flex: 1; padding: 4px 10px; border-radius: 8px; box-sizing: border-box; min-width: 0; }
-    .date-input label { width: auto !important; font-size: 0.75rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
-    .date-input input { height: 32px; padding: 0 4px; font-size: 0.8rem !important; line-height: normal; min-width: 40px; background: transparent !important; }
+    .date-range-panel .date-input { width: auto !important; flex: 1; padding: 4px 8px; border-radius: 8px; box-sizing: border-box; min-width: 0; }
+    .date-range-panel .date-input label { width: auto !important; font-size: 0.72rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
+    .date-range-panel .date-input input {
+        height: 34px; padding: 0 6px; font-size: 14px; line-height: normal;
+        min-width: 96px; background: rgba(255,255,255,0.08) !important; text-align: left;
+    }
+    /* 批量面板日期：保持「左右并排」，且每个字段内部也是一行（标签 + 输入框横向），确保 Android/iOS 都显示完整日期 */
+    .date-range-panel.date-range-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; align-items: center; }
+    .date-range-panel.date-range-mobile-stack .date-input { width: auto !important; flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; padding: 4px 8px; }
+    .date-range-panel.date-range-mobile-stack .date-input label { width: auto !important; text-align: left; font-size: 0.72rem !important; white-space: nowrap; margin: 0; flex-shrink: 0; }
+    .date-range-panel.date-range-mobile-stack .date-input input { flex: 1; width: auto; min-width: 0; font-size: 14px; height: 34px; line-height: normal; text-align: left; box-sizing: border-box; background: rgba(255,255,255,0.08) !important; }
 
     .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
     .batch-action-buttons { flex-wrap: nowrap !important; }
-    .batch-action-buttons button, .edit-create-footer button { flex: 1; height: 32px; min-width: 0; }
-    .field-row { flex-wrap: nowrap; gap: 4px; margin-bottom: 8px; }
-    .field-row label { width: 70px; white-space: nowrap; font-size: 0.65rem; }
-    .field-row select, .field-row input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 4px; font-size: 0.7rem; }
-    .field-row input[type="date"] { height: 30px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
-    .field-group { flex-wrap: nowrap; gap: 4px; }
-    .fuel-section, .cardno-section { flex-direction: row; gap: 4px; }
-    .fuel-section > label, .cardno-section > label { width: 70px; font-size: 0.65rem; }
-    .fuel-preset-btn { padding: 0 8px; font-size: 0.55rem; border-radius: 10px; height: 30px; line-height: 30px; }
-    .fuel-mapping-entry, .cardno-entry { gap: 3px; margin-bottom: 0; }
-    .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 28px; line-height: 26px; padding: 0 4px; font-size: 0.7rem; }
-    .fuel-mapping-entry input[type="date"] { height: 28px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
+    .batch-action-buttons button, .edit-create-footer button { flex: 1; height: 34px; min-width: 0; }
+    /* 统一所有字段行：label 定宽右对齐（--flw 66px），字号与输入框协调 */
+    .modal { --flw: 66px; }
+    .field-row { flex-wrap: nowrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+    .field-row label { width: var(--flw, 66px); white-space: nowrap; font-size: 13px; text-align: right; }
+    .field-row select, .field-row input:not([type="date"]) { height: 34px; line-height: 32px; padding: 0 8px; font-size: 14px; }
+    .field-row input[type="date"] {
+        height: 34px; padding: 0 8px; font-size: 14px; line-height: normal;
+        min-width: 96px; letter-spacing: 0; text-align: left;
+        -webkit-appearance: none; appearance: none;
+    }
+    .field-group { flex-wrap: nowrap; gap: 8px; }
+    /* 站点配置弹窗日期：保持左右并排，标签与输入框同在一行，字号/高度与其他输入框统一 */
+    .field-group.date-group-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; }
+    .field-group.date-group-mobile-stack .field-row { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; margin-bottom: 0; }
+    .field-group.date-group-mobile-stack .field-row label { width: var(--flw, 66px); text-align: right; font-size: 13px; white-space: nowrap; margin: 0; flex-shrink: 0; }
+    .field-group.date-group-mobile-stack .field-row input[type="date"] { flex: 1; width: auto; min-width: 0; font-size: 14px; height: 34px; line-height: normal; text-align: left; box-sizing: border-box; }
+    /* 站点选择、省份代码、油品/卡号区的 label 与标准 field-row 对齐 */
+    .station-select-row, .org-code-field-row { gap: 6px; }
+    .station-select-row > label, .org-code-field-row > label { width: var(--flw, 66px); text-align: right; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+    .fuel-section, .cardno-section { flex-direction: row; gap: 6px; align-items: center; }
+    .fuel-section > label, .cardno-section > label { width: var(--flw, 66px); text-align: right; font-size: 13px; padding-top: 0; }
+    .fuel-preset-btn { padding: 0 8px; font-size: 0.62rem; border-radius: 10px; height: 34px; line-height: 34px; }
+    .fuel-mapping-entry, .cardno-entry { gap: 4px; margin-bottom: 0; }
+    .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 34px; line-height: 32px; padding: 0 8px; font-size: 14px; }
+    .fuel-mapping-entry input[type="date"], .cardno-entry input[type="date"] {
+        height: 34px; padding: 0 8px; font-size: 14px; line-height: normal;
+        min-width: 96px; text-align: left;
+    }
     .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 22px; height: 22px; }
-    .admin-field label { width: 50px; font-size: 0.7rem; }
+    .admin-field label { width: var(--flw, 66px); font-size: 13px; }
     .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
 
     /* ===== 未结算横幅 / 结算 ===== */
@@ -1546,7 +1642,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .field-group { display: flex; gap: 8px; }
     .field-group > .field-row { flex: 1 1 0%; min-width: 0; }
     .field-group > .field-row > input { width: 100%; min-width: 0; box-sizing: border-box; }
-    .field-group > .field-row > label { white-space: nowrap; flex-shrink: 0; font-size: 0.85rem; }
+    .field-group > .field-row > label { white-space: nowrap; flex-shrink: 0; font-size: 13px; }
     .org-code-search-dropdown { max-height: 240px; }
     .org-code-search-input { font-size: 16px; }
 }
@@ -1560,10 +1656,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 5px 8px; font-size: 0.62rem; letter-spacing: 0.5px; }
     .stat-card .number { font-size: 1rem; }
     .stat-card .label { font-size: 0.55rem; }
-    .date-range-card input[type="date"] { font-size: 0.46rem; letter-spacing: 0; }
+    .date-range-card input[type="date"] { font-size: 0.72rem; letter-spacing: 0; min-width: 0; width: 100%; }
     .filter-bar { padding: 4px 6px; gap: 3px; }
     .filter-bar input, .filter-bar button { height: 32px; font-size: 0.7rem; padding: 0 8px; }
-    .date-range-panel .date-input { flex: 1 1 100%; }
+    /* 超窄屏也保持批量面板日期左右并排（标签在上、输入框占满整列），不再堆叠 */
     #stationChecklist .station-item { padding: 8px 4px; }
     .batch-controls > button { font-size: 11px; padding: 8px 1px; }
 }
@@ -1839,4 +1935,115 @@ input, textarea, select, .station-item label, #permAdminId {
     .fee-table td.ftd-ranges { padding: 16px 14px !important; font-size: 0.85rem; color: #94a3b8; vertical-align: middle; white-space: nowrap; }
     .fee-table td.ftd-ranges .daily-ranges-cell { display: inline-block; padding: 3px 10px; font-size: 0.75rem; color: #94a3b8; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 6px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
     .fee-table td.ftd-ranges .ranges-label { color: #64748b; font-weight: 500; font-size: 0.7rem; margin-right: 4px; opacity: 0.85; }
+}
+
+/* ===== 23. 移动端视觉统一（最后加载，专治「字体参差不齐」与「卡片不均分」） ===== */
+@media (max-width: 768px) {
+    /* --- 首页顶部三张卡片严格等分：flex-basis 归零 + max-width 兜底，内容再宽也不会把某张卡撑长 --- */
+    .top-bar > .stat-card,
+    .top-bar > .date-range-card {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: calc((100% - 12px) / 3);
+        box-sizing: border-box;
+    }
+    .date-range-card .date-row { min-width: 0; overflow: hidden; }
+    .date-range-card input[type="date"] { min-width: 0 !important; width: 100%; max-width: 100%; }
+
+    /* --- 弹窗字体统一：所有 label 一律 13px，所有可输入控件一律 14px、同高 34px --- */
+    .modal label,
+    .modal .field-row label,
+    .modal .date-input label,
+    .modal .fuel-section > label,
+    .modal .cardno-section > label,
+    .modal .station-select-row > label,
+    .modal .org-code-field-row > label,
+    .modal .admin-field label {
+        font-size: 13px !important;
+        line-height: 1.35;
+    }
+    /* --- 弹窗 label 定宽对齐：统一 var(--flw) 右对齐，「开始/结束」等两字标签与四字标签等长，一眼看过去整整齐齐 --- */
+    .modal .field-row label { width: var(--flw, 66px); flex-shrink: 0; text-align: right; }
+    .modal .field-group.date-group-mobile-stack .field-row label { width: var(--flw, 66px); text-align: right; }
+    .modal .station-select-row > label, .modal .org-code-field-row > label { width: var(--flw, 66px); text-align: right; }
+    .modal .fuel-section > label, .modal .cardno-section > label { width: var(--flw, 66px); text-align: right; }
+    .modal .lock-icon { font-size: 12px; }
+    .modal input:not([type="date"]),
+    .modal select,
+    .modal textarea {
+        font-size: 14px !important;
+        height: 34px;
+        line-height: 32px;
+        box-sizing: border-box;
+    }
+    .modal input[type="date"] {
+        font-size: 14px !important;
+        height: 34px;
+        line-height: normal;
+    }
+    /* 油品预设按钮：12px、允许换行，不再出现「95号汽/」这类截断 */
+    .modal .fuel-preset-btn { font-size: 12px !important; height: 30px; line-height: 30px; padding: 0 10px; white-space: nowrap; }
+    .modal .fuel-editor-container > div:first-child { flex-wrap: wrap !important; overflow-x: visible !important; }
+    /* 预设按钮换行后，与下方条目区留出间距 */
+    .modal .fuel-editor-container > div:first-child { margin-bottom: 6px; }
+}
+@media (max-width: 420px) {
+    .top-bar > .stat-card,
+    .top-bar > .date-range-card { max-width: calc((100% - 12px) / 3); }
+    .modal .fuel-preset-btn { height: 28px; line-height: 28px; }
+}
+
+/* ===== 24. 表单标签分散对齐（全局，最后加载） =====
+   两字标签「开始」自动撑成「开  始」、「用户ID」撑成「用户 I D」，
+   与四字标签「已用次数」视觉等宽，整列标签横向上完全对齐。
+   不支持 text-align-last 的旧浏览器自动回退为右对齐，宽度仍是统一的 --flw。 */
+.field-row label,
+.station-select-row > label,
+.org-code-field-row > label,
+.fuel-section > label,
+.cardno-section > label,
+.date-input label,
+.admin-field label,
+.calc-field-row label,
+.settle-submodal .field-row label,
+.le-submodal .field-row label,
+.field-group.date-group-mobile-stack .field-row label {
+    text-align: justify !important;
+    text-align-last: justify !important;
+}
+
+/* ===== 25. 移动端并排日期：字体自适应收缩，保证「开始/结束」完整显示且同一行不换行 =====
+   窄屏上每个日期输入框只有半行宽度，安卓 WebView 会把显示不下的日期截断；
+   这里按屏幕宽度分级缩小字号与日历图标，直到任何机型都能完整显示。 */
+@media (max-width: 768px) {
+    .field-group.date-group-mobile-stack .field-row input[type="date"],
+    .date-range-panel.date-range-mobile-stack .date-input input {
+        font-size: 12.5px !important;
+        padding: 0 4px !important;
+        min-width: 0 !important;
+        width: 100%;
+        letter-spacing: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    .field-group.date-group-mobile-stack .field-row input[type="date"]::-webkit-calendar-picker-indicator,
+    .date-range-panel.date-range-mobile-stack .date-input input::-webkit-calendar-picker-indicator {
+        width: 10px; height: 10px; padding: 0; margin: 0 0 0 2px; flex-shrink: 0;
+    }
+}
+@media (max-width: 380px) {
+    /* 超窄屏：整列标签同步缩小（保持对齐），日期字号再降一级 */
+    .modal { --flw: 56px; }
+    .field-group.date-group-mobile-stack .field-row { gap: 3px; }
+    .date-range-panel.date-range-mobile-stack { gap: 6px; }
+    .field-group.date-group-mobile-stack .field-row input[type="date"],
+    .date-range-panel.date-range-mobile-stack .date-input input {
+        font-size: 11.5px !important;
+        padding: 0 3px !important;
+    }
+    .field-group.date-group-mobile-stack .field-row input[type="date"]::-webkit-calendar-picker-indicator,
+    .date-range-panel.date-range-mobile-stack .date-input input::-webkit-calendar-picker-indicator {
+        width: 9px; height: 9px;
+    }
 }
