@@ -1226,11 +1226,11 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         height: 34px; padding: 0 6px; font-size: 0.82rem !important; line-height: normal;
         min-width: 100px; background: rgba(255,255,255,0.08) !important; text-align: left;
     }
-    /* 批量面板日期：保持「左右并排」，每个字段标签在上、输入框占满整列，确保 Android/iOS 都显示完整日期 */
-    .date-range-panel.date-range-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; align-items: flex-start; }
-    .date-range-panel.date-range-mobile-stack .date-input { width: auto !important; flex: 1 1 0; min-width: 0; flex-direction: column; align-items: stretch; gap: 4px; padding: 6px 8px; }
-    .date-range-panel.date-range-mobile-stack .date-input label { width: auto !important; text-align: left; font-size: 0.72rem !important; margin: 0 0 2px; flex-shrink: 0; }
-    .date-range-panel.date-range-mobile-stack .date-input input { width: 100%; flex: none; min-width: 120px; font-size: 0.95rem !important; height: 38px; line-height: normal; text-align: left; box-sizing: border-box; background: rgba(255,255,255,0.08) !important; }
+    /* 批量面板日期：保持「左右并排」，且每个字段内部也是一行（标签 + 输入框横向），确保 Android/iOS 都显示完整日期 */
+    .date-range-panel.date-range-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; align-items: center; }
+    .date-range-panel.date-range-mobile-stack .date-input { width: auto !important; flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; padding: 4px 8px; }
+    .date-range-panel.date-range-mobile-stack .date-input label { width: auto !important; text-align: left; font-size: 0.72rem !important; white-space: nowrap; margin: 0; flex-shrink: 0; }
+    .date-range-panel.date-range-mobile-stack .date-input input { flex: 1; width: auto; min-width: 110px !important; font-size: 14px !important; height: 36px; line-height: normal; text-align: left; box-sizing: border-box; background: rgba(255,255,255,0.08) !important; }
 
     .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
     .batch-action-buttons { flex-wrap: nowrap !important; }
@@ -1244,12 +1244,12 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
         -webkit-appearance: none; appearance: none;
     }
     .field-group { flex-wrap: nowrap; gap: 8px; }
-    /* 站点配置弹窗的 开始/结束日期：保持「左右并排」，每个字段标签在上、输入框占满整列，
+    /* 站点配置弹窗的 开始/结束日期：保持「左右并排」，且每个字段内部也是一行（标签 + 输入框横向），
        从根上消除 Android WebView/Chrome 因宽度不足把日期截断成 2026/09 的问题 */
     .field-group.date-group-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; }
-    .field-group.date-group-mobile-stack .field-row { flex: 1 1 0; min-width: 0; flex-direction: column; align-items: stretch; gap: 4px; margin-bottom: 0; }
-    .field-group.date-group-mobile-stack .field-row label { width: auto; text-align: left; font-size: 0.72rem; margin: 0 0 2px; flex-shrink: 0; }
-    .field-group.date-group-mobile-stack .field-row input[type="date"] { width: 100%; flex: none; min-width: 120px; font-size: 0.95rem !important; height: 38px; line-height: normal; text-align: left; box-sizing: border-box; }
+    .field-group.date-group-mobile-stack .field-row { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; margin-bottom: 0; }
+    .field-group.date-group-mobile-stack .field-row label { width: auto; text-align: left; font-size: 0.72rem; white-space: nowrap; margin: 0; flex-shrink: 0; }
+    .field-group.date-group-mobile-stack .field-row input[type="date"] { flex: 1; width: auto; min-width: 110px !important; font-size: 14px !important; height: 36px; line-height: normal; text-align: left; box-sizing: border-box; }
     .fuel-section, .cardno-section { flex-direction: row; gap: 4px; }
     .fuel-section > label, .cardno-section > label { width: 70px; font-size: 0.65rem; }
     .fuel-preset-btn { padding: 0 8px; font-size: 0.55rem; border-radius: 10px; height: 30px; line-height: 30px; }
