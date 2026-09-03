@@ -505,9 +505,8 @@ body::after {
 .date-range-card input[type="date"] {
     background: transparent; border: none; color: #ffffff;
     font-size: 1rem; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0, 235, 225, 0.9);
-    cursor: pointer; font-family: var(--font-family); width: 100%; min-width: 110px; padding: 2px 4px;
-    outline: none; line-height: 1.2; letter-spacing: 0.5px;
-    -webkit-appearance: none; appearance: none;
+    cursor: pointer; font-family: var(--font-family); width: 100%; min-width: 0; padding: 2px 4px;
+    outline: none; line-height: 1.2; letter-spacing: 1px;
 }
 .date-range-card input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8) sepia(1) saturate(5) hue-rotate(165deg); cursor: pointer; opacity: 0.8;
@@ -515,34 +514,6 @@ body::after {
 }
 .date-range-card input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: #ffffff; }
 .date-range-card input[type="date"]::-webkit-datetime-edit-text { color: rgba(200, 245, 245, 0.8); }
-
-/* ----- 全局 date/month 输入框健壮化：解决 Android WebView 截断、iOS 缩放等问题 ----- */
-input[type="date"], input[type="month"] {
-    -webkit-appearance: none;
-    appearance: none;
-    font-family: var(--font-family);
-    /* 禁止浏览器自动缩放时产生截断，最小可读字号 */
-    font-size: 0.95rem;
-    /* 保证完整日期（如 2026/09/03 或 2026年9月3日）能被渲染出来 */
-    min-width: 120px;
-    letter-spacing: 0;
-    text-align: left;
-    /* 为日历指示器留出足够空间，不被内容挤掉 */
-    padding-right: 28px;
-}
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="month"]::-webkit-calendar-picker-indicator {
-    opacity: 0.8;
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-}
-input[type="date"]:focus, input[type="month"]:focus {
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 0 2px rgba(0, 220, 255, 0.15);
-    outline: none;
-}
 
 /* ===== 5. 筛选栏 ===== */
 .filter-bar {
@@ -765,9 +736,9 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 .batch-section { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin: 15px 0; }
 .batch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
 .date-range-panel { display: flex; flex-direction: row; gap: 20px; align-items: flex-end; margin-bottom: 20px; flex-wrap: nowrap; }
-.date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); min-width: 0; }
+.date-input { flex: 1; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border); }
 .date-input label { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; flex-shrink: 0; width: 80px; text-align: right; }
-.date-input input { flex: 1; min-width: 110px; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; font-size: 0.95rem; }
+.date-input input { flex: 1; min-width: 0; background: rgba(255,255,255,0.1); border: none; color: white; padding: 0 8px; border-radius: 6px; height: 38px; line-height: 38px; }
 .batch-action-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; }
 .edit-create-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
 
@@ -1163,14 +1134,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .stat-card { height: 70px; min-width: 0; flex: 1; }
     .stat-card .number { font-size: 1.2rem; }
     .stat-card .label { font-size: 0.6rem; letter-spacing: 0.5px; }
-    .date-range-card { height: auto; min-height: 70px; min-width: 0; flex: 1; padding: 4px 5px; gap: 2px; }
-    .date-range-card .date-row { gap: 2px; }
-    .date-range-card label { font-size: 0.55rem; width: 16px; flex-shrink: 0; text-align: center; }
-    .date-range-card input[type="date"] {
-        font-size: 0.72rem !important; padding: 0 1px; min-width: 104px; letter-spacing: 0;
-        text-align: center; line-height: 1.2;
-    }
-    .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 11px; height: 11px; flex-shrink: 0; padding: 0; margin: 0; }
+    .date-range-card { height: 70px; min-width: 0; flex: 1; padding: 2px 4px; gap: 1px; }
+    .date-range-card label { font-size: 0.5rem; width: 20px; flex-shrink: 0; }
+    .date-range-card input[type="date"] { font-size: 0.56rem; padding: 0; min-width: 0; letter-spacing: 0; }
+    .date-range-card input[type="date"]::-webkit-calendar-picker-indicator { width: 12px; height: 12px; }
     .filter-bar { flex-wrap: nowrap; gap: 4px; padding: 6px 8px; }
     .filter-bar .filter-input { flex: 1; min-width: 0; }
     .filter-bar label { font-size: 0.65rem; gap: 4px; flex-wrap: nowrap !important; }
@@ -1183,11 +1150,7 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .modal { padding: 12px; width: 95%; }
     .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
     .modal input:not([type="date"]), .modal textarea { height: 32px; line-height: 30px; padding: 0 6px; font-size: 0.7rem; }
-    .modal input[type="date"] {
-        height: 36px; padding: 0 8px; font-size: 0.85rem !important; line-height: normal;
-        min-width: 120px; letter-spacing: 0; text-align: left;
-        -webkit-appearance: none; appearance: none;
-    }
+    .modal input[type="date"] { height: 32px; padding: 0 6px; font-size: 0.7rem; line-height: normal; }
     .modal button { padding: 4px 10px; font-size: 0.65rem; margin: 3px 2px 0 0; height: 32px; }
 
     .batch-controls { gap: 4px; justify-content: center; }
@@ -1218,19 +1181,11 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .mode-stats-label { font-size: 0.55rem !important; }
     .mode-stats-number { font-size: 1.4rem !important; }
 
-    /* 日期强制一行（普通 batch 面板保持并排，但给足宽度） */
+    /* 日期强制一行 */
     .date-range-panel { flex-wrap: nowrap !important; gap: 6px; align-items: center; width: 100%; }
-    .date-range-panel .date-input { width: auto !important; flex: 1; padding: 4px 8px; border-radius: 8px; box-sizing: border-box; min-width: 0; }
-    .date-range-panel .date-input label { width: auto !important; font-size: 0.75rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
-    .date-range-panel .date-input input {
-        height: 34px; padding: 0 6px; font-size: 0.82rem !important; line-height: normal;
-        min-width: 100px; background: rgba(255,255,255,0.08) !important; text-align: left;
-    }
-    /* 批量面板日期：保持「左右并排」，且每个字段内部也是一行（标签 + 输入框横向），确保 Android/iOS 都显示完整日期 */
-    .date-range-panel.date-range-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; align-items: center; }
-    .date-range-panel.date-range-mobile-stack .date-input { width: auto !important; flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; padding: 4px 8px; }
-    .date-range-panel.date-range-mobile-stack .date-input label { width: auto !important; text-align: left; font-size: 0.72rem !important; white-space: nowrap; margin: 0; flex-shrink: 0; }
-    .date-range-panel.date-range-mobile-stack .date-input input { flex: 1; width: auto; min-width: 110px !important; font-size: 14px !important; height: 36px; line-height: normal; text-align: left; box-sizing: border-box; background: rgba(255,255,255,0.08) !important; }
+    .date-input { width: auto !important; flex: 1; padding: 4px 10px; border-radius: 8px; box-sizing: border-box; min-width: 0; }
+    .date-input label { width: auto !important; font-size: 0.75rem !important; white-space: nowrap; text-align: left; flex-shrink: 0; }
+    .date-input input { height: 32px; padding: 0 4px; font-size: 0.8rem !important; line-height: normal; min-width: 40px; background: transparent !important; }
 
     .batch-action-buttons, .edit-create-footer { gap: 6px; justify-content: center; }
     .batch-action-buttons { flex-wrap: nowrap !important; }
@@ -1238,27 +1193,14 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .field-row { flex-wrap: nowrap; gap: 4px; margin-bottom: 8px; }
     .field-row label { width: 70px; white-space: nowrap; font-size: 0.65rem; }
     .field-row select, .field-row input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 4px; font-size: 0.7rem; }
-    .field-row input[type="date"] {
-        height: 34px; padding: 0 6px; font-size: 0.82rem !important; line-height: normal;
-        min-width: 120px; letter-spacing: 0; text-align: left;
-        -webkit-appearance: none; appearance: none;
-    }
-    .field-group { flex-wrap: nowrap; gap: 8px; }
-    /* 站点配置弹窗的 开始/结束日期：保持「左右并排」，且每个字段内部也是一行（标签 + 输入框横向），
-       从根上消除 Android WebView/Chrome 因宽度不足把日期截断成 2026/09 的问题 */
-    .field-group.date-group-mobile-stack { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; }
-    .field-group.date-group-mobile-stack .field-row { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 4px; margin-bottom: 0; }
-    .field-group.date-group-mobile-stack .field-row label { width: auto; text-align: left; font-size: 0.72rem; white-space: nowrap; margin: 0; flex-shrink: 0; }
-    .field-group.date-group-mobile-stack .field-row input[type="date"] { flex: 1; width: auto; min-width: 110px !important; font-size: 14px !important; height: 36px; line-height: normal; text-align: left; box-sizing: border-box; }
+    .field-row input[type="date"] { height: 30px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
+    .field-group { flex-wrap: nowrap; gap: 4px; }
     .fuel-section, .cardno-section { flex-direction: row; gap: 4px; }
     .fuel-section > label, .cardno-section > label { width: 70px; font-size: 0.65rem; }
     .fuel-preset-btn { padding: 0 8px; font-size: 0.55rem; border-radius: 10px; height: 30px; line-height: 30px; }
     .fuel-mapping-entry, .cardno-entry { gap: 3px; margin-bottom: 0; }
     .fuel-mapping-entry input:not([type="date"]), .cardno-entry input:not([type="date"]) { height: 28px; line-height: 26px; padding: 0 4px; font-size: 0.7rem; }
-    .fuel-mapping-entry input[type="date"], .cardno-entry input[type="date"] {
-        height: 30px; padding: 0 6px; font-size: 0.78rem !important; line-height: normal;
-        min-width: 110px; text-align: left;
-    }
+    .fuel-mapping-entry input[type="date"] { height: 28px; padding: 0 4px; font-size: 0.7rem; line-height: normal; }
     .fuel-mapping-entry .btn-remove-fuel, .cardno-entry .btn-remove-cardno { width: 22px; height: 22px; }
     .admin-field label { width: 50px; font-size: 0.7rem; }
     .admin-field input:not([type="date"]) { height: 30px; line-height: 28px; padding: 0 6px; font-size: 0.7rem; }
@@ -1618,10 +1560,10 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
     .logout-btn, .admin-btn, .config-btn, .calc-btn { padding: 5px 8px; font-size: 0.62rem; letter-spacing: 0.5px; }
     .stat-card .number { font-size: 1rem; }
     .stat-card .label { font-size: 0.55rem; }
-    .date-range-card input[type="date"] { font-size: 0.72rem; letter-spacing: 0; min-width: 104px; }
+    .date-range-card input[type="date"] { font-size: 0.46rem; letter-spacing: 0; }
     .filter-bar { padding: 4px 6px; gap: 3px; }
     .filter-bar input, .filter-bar button { height: 32px; font-size: 0.7rem; padding: 0 8px; }
-    /* 超窄屏也保持批量面板日期左右并排（标签在上、输入框占满整列），不再堆叠 */
+    .date-range-panel .date-input { flex: 1 1 100%; }
     #stationChecklist .station-item { padding: 8px 4px; }
     .batch-controls > button { font-size: 11px; padding: 8px 1px; }
 }
