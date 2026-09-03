@@ -2047,3 +2047,16 @@ input, textarea, select, .station-item label, #permAdminId {
         width: 9px; height: 9px;
     }
 }
+@media (max-width: 350px) {
+    /* 极窄屏兜底：iOS 长日期格式「2026年9月4日」比数字格式更宽，再降一级确保完整 */
+    .modal { --flw: 52px; }
+    .field-group.date-group-mobile-stack .field-row input[type="date"],
+    .date-range-panel.date-range-mobile-stack .date-input input {
+        font-size: 11px !important;
+        padding: 0 2px !important;
+    }
+    .field-group.date-group-mobile-stack .field-row input[type="date"]::-webkit-calendar-picker-indicator,
+    .date-range-panel.date-range-mobile-stack .date-input input::-webkit-calendar-picker-indicator {
+        width: 8px; height: 8px;
+    }
+}
