@@ -2152,6 +2152,12 @@ input, textarea, select, .station-item label, #permAdminId {
     font-weight: 800;
     text-shadow: 0 0 10px rgba(255, 95, 95, 0.75);
 }
+/* 日期倒挂等警告提示：橙色醒目，与 cb-over 区分 */
+.calc-bubble .cb-warn {
+    color: #ffb454;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(255, 180, 84, 0.55);
+}
 @media (max-width: 768px) {
     .calc-bubble { font-size: 0.72rem; padding: 7px 10px; line-height: 1.65; }
     .calc-bubble .cb-target { height: 32px; width: 100px; }
