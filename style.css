@@ -2060,3 +2060,188 @@ input, textarea, select, .station-item label, #permAdminId {
         width: 8px; height: 8px;
     }
 }
+
+/* ===== 27. 日期/次数智能计算气泡（仿费用预测逻辑提示） ===== */
+.calc-bubble {
+    margin: 6px 0 2px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(0, 229, 255, 0.10), rgba(0, 150, 255, 0.06));
+    border: 1px solid rgba(0, 229, 255, 0.40);
+    color: #8ce8ff;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative;
+    animation: calcBubbleIn 0.28s ease;
+}
+.calc-bubble::before {
+    content: "";
+    position: absolute;
+    top: -6px; left: 36px;
+    width: 10px; height: 10px;
+    transform: rotate(45deg);
+    background: #0d1930;
+    border-left: 1px solid rgba(0, 229, 255, 0.40);
+    border-top: 1px solid rgba(0, 229, 255, 0.40);
+}
+@keyframes calcBubbleIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* 气泡内部：目标总量输入行 */
+.calc-bubble .cb-target-row {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    flex-wrap: wrap;
+    white-space: nowrap;
+}
+.calc-bubble .cb-target {
+    width: 96px; height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 229, 255, 0.45);
+    background: rgba(0, 229, 255, 0.08);
+    color: #aef3ff;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+}
+.calc-bubble .cb-target:focus { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.35); }
+.calc-bubble .cb-target-hint { font-size: 0.68rem; color: rgba(140, 232, 255, 0.6); }
+/* 一键修正按钮行（改每日次数 / 改结束日期） */
+.calc-bubble .cb-actions {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.calc-bubble .cb-btn {
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 5px 10px;
+    font-size: 0.70rem;
+    line-height: 1.35;
+    font-weight: normal;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 229, 255, 0.45);
+    background: rgba(0, 229, 255, 0.10);
+    color: #aef3ff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.calc-bubble .cb-btn:hover { background: rgba(0, 229, 255, 0.22); border-color: rgba(0, 229, 255, 0.8); }
+@media (max-width: 768px) {
+    .calc-bubble .cb-btn { font-size: 0.66rem; padding: 5px 8px; }
+}
+/* 预计总次数结果：红色醒目 */
+.calc-bubble .cb-red {
+    color: #ff5f5f;
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(255, 95, 95, 0.45);
+}
+/* 超出目标量的差额：更亮的红 + 加粗闪烁感 */
+.calc-bubble .cb-over {
+    color: #ff8585;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(255, 95, 95, 0.75);
+}
+@media (max-width: 768px) {
+    .calc-bubble { font-size: 0.72rem; padding: 7px 10px; line-height: 1.65; }
+    .calc-bubble .cb-target { height: 32px; width: 100px; }
+}
+/* 「智能计算」显式触发按钮：小药丸形，嵌在「组织代码」行第二列，不独占一行 */
+.cb-trigger {
+    flex-shrink: 0;
+    margin: 0 0 0 8px;
+    align-self: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    background: rgba(0, 229, 255, 0.06);
+    color: rgba(140, 232, 255, 0.75);
+    font-size: 0.68rem;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+}
+.cb-trigger:hover { border-color: rgba(0, 229, 255, 0.7); color: #aef3ff; }
+.cb-trigger.cb-ready {
+    border-color: rgba(0, 229, 255, 0.85);
+    color: #aef3ff;
+    background: rgba(0, 229, 255, 0.12);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+    animation: cbPulse 1.6s ease-in-out infinite;
+}
+@keyframes cbPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(0, 229, 255, 0.25); }
+    50%      { box-shadow: 0 0 14px rgba(0, 229, 255, 0.55); }
+}
+@media (max-width: 768px) {
+    .cb-trigger { font-size: 0.64rem; padding: 4px 10px; margin: 0 0 0 6px; }
+    .field-row > .cb-trigger, .org-code-field-row > .cb-trigger { flex-shrink: 0; }
+}
+/* 「每日次数」输入框容器：🧮 图标绝对定位到框内最右侧，输入框本身撑满整行不变 */
+.cb-input-wrap {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+.cb-input-wrap > input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-right: 38px !important;   /* 给 🧮 让出位置 */
+}
+/* 隐藏数字输入框的上下小箭头，避免与 🧮 图标重叠 */
+.cb-input-wrap input[type="number"]::-webkit-outer-spin-button,
+.cb-input-wrap input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.cb-input-wrap input[type="number"] { -moz-appearance: textfield; }
+/* 🧮 纯图标按钮（嵌在输入框内右侧） */
+.cb-trigger.cb-icon {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #8ce8ff;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.cb-trigger.cb-icon:hover { background: rgba(0, 229, 255, 0.14); color: #aef3ff; }
+.cb-trigger.cb-icon.cb-ready {
+    background: rgba(0, 229, 255, 0.16);
+    color: #aef3ff;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+    animation: cbPulse 1.6s ease-in-out infinite;
+}
+@media (max-width: 768px) {
+    .cb-input-wrap > input { padding-right: 34px !important; }
+    .cb-trigger.cb-icon { width: 26px; height: 26px; font-size: 15px; right: 4px; min-height: 0; }
+}
