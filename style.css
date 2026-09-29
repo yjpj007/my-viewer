@@ -397,8 +397,12 @@ body::after {
 
 /* 统计卡片（翻转） */
 .stat-card {
-    background: linear-gradient(135deg, rgba(0, 120, 240, 0.58) 0%, rgba(0, 50, 180, 0.72) 100%);
-    backdrop-filter: blur(15px);
+    /* 渐变两头颜色拉近 + 加一层极淡噪点抖动（见下方 ::after），
+       避免 8bit 屏幕上渐变被切成一条条色带（看着像分层）。 */
+    background: linear-gradient(135deg, rgba(0, 118, 238, 0.62) 0%, rgba(0, 74, 198, 0.70) 100%);
+    /* 注意：这里不能再加 backdrop-filter。它与下面 .flip-card 的 3D（perspective+preserve-3d）
+       同时存在时，Chromium 会为卡面单独合成一层背景，卡片边缘内侧会出现一圈「内嵌圆角」的
+       分层接缝。去掉模糊后渐变干净，翻面动画不受影响。 */
     border: 1px solid rgba(0, 200, 255, 0.55);
     border-radius: 14px; padding: 0; text-align: center;
     box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 22px rgba(0, 150, 255, 0.35), inset 0 1px 0 rgba(255,255,255,0.18);
@@ -408,6 +412,20 @@ body::after {
     perspective: 800px;
     cursor: pointer;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
+    position: relative;
+}
+
+/* 抗色带：叠一层几乎看不见的噪点，把渐变里硬邦邦的色阶边界打散 */
+.stat-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.055;
+    background-repeat: repeat;
+    background-size: 96px 96px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='96' height='96' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .stat-card .flip-card {
@@ -441,14 +459,14 @@ body::after {
 
 /* 统计卡片个性化霓虹色 */
 #totalCard {
-    background: linear-gradient(135deg, rgba(0, 160, 255, 0.62) 0%, rgba(0, 60, 200, 0.75) 100%);
+    background: linear-gradient(135deg, rgba(0, 148, 250, 0.64) 0%, rgba(0, 104, 220, 0.72) 100%);
     border-color: rgba(0, 220, 255, 0.65);
     box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 26px rgba(0, 180, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 #totalCard:hover { box-shadow: 0 0 36px rgba(0, 220, 255, 0.75), 0 8px 25px rgba(0,0,0,0.5), 0 0 60px rgba(0, 150, 255, 0.35); }
 
 #todayCard {
-    background: linear-gradient(135deg, rgba(170, 0, 255, 0.55) 0%, rgba(90, 0, 200, 0.72) 100%);
+    background: linear-gradient(135deg, rgba(158, 22, 250, 0.60) 0%, rgba(118, 8, 224, 0.70) 100%);
     border-color: rgba(200, 0, 255, 0.62);
     box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 26px rgba(170, 0, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.18);
 }
@@ -876,22 +894,48 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 @keyframes heroPulse { 0%,100%{ box-shadow:0 0 18px rgba(255,23,68,0.2);} 50%{ box-shadow:0 0 30px rgba(255,23,68,0.5);} }
 .unsettled-hero-toggle { cursor: pointer; user-select: none; display: inline-block; margin-right: 6px; font-size: 0.8rem; color: var(--success); transition: transform 0.2s, opacity 0.2s; vertical-align: middle; border-radius: 6px; }
 .unsettled-hero-toggle:hover { opacity: 1; text-shadow: 0 0 10px var(--success); }
-/* 收起态：整条横幅只留三角，金额、文案、按钮全部隐藏（截屏给顾客看时用） */
+/* 收起态：整条横幅压成「一条细线」，金额、文案、按钮全部隐藏（截屏给顾客看时用） */
 .unsettled-hero.collapsed {
     background: transparent;
-    border-color: transparent;
+    border-width: 0;
     box-shadow: none;
     animation: none;
-    padding: 2px 4px;
-    margin-bottom: 8px;
+    padding: 0;
+    margin: 2px 0 8px;
+    height: 3px;
+    min-height: 0;
+    line-height: 0;
+    overflow: visible;
 }
+.unsettled-hero.collapsed .unsettled-hero-title { line-height: 0; font-size: 0; }
 .unsettled-hero.collapsed .unsettled-hero-toggle {
-    transform: rotate(-90deg);
-    font-size: 1rem;
-    margin-right: 0;
-    padding: 4px 12px;
-    opacity: 0.75;
-    background: rgba(255, 255, 255, 0.05);
+    display: block;
+    position: relative;
+    width: 56px;
+    height: 3px;
+    margin: 0;
+    padding: 0;
+    font-size: 0;
+    color: transparent;
+    background: var(--success);
+    border-radius: 2px;
+    opacity: 0.45;
+    transform: none;
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+/* 线太细不好点：用伪元素把点击热区撑到 120×16，视觉上仍是一条 3px 细线 */
+.unsettled-hero.collapsed .unsettled-hero-toggle::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 16px;
+}
+.unsettled-hero.collapsed .unsettled-hero-toggle:hover {
+    opacity: 1;
+    box-shadow: 0 0 10px var(--success);
 }
 .unsettled-hero.collapsed .unsettled-hero-text,
 .unsettled-hero.collapsed .unsettled-hero-sub,
