@@ -874,8 +874,26 @@ td { border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; color: va
 }
 .unsettled-hero.show { display: block; }
 @keyframes heroPulse { 0%,100%{ box-shadow:0 0 18px rgba(255,23,68,0.2);} 50%{ box-shadow:0 0 30px rgba(255,23,68,0.5);} }
-.unsettled-hero-toggle { cursor: pointer; user-select: none; display: inline-block; margin-right: 6px; font-size: 0.8rem; color: var(--success); transition: transform 0.2s; vertical-align: middle; }
-.unsettled-hero.collapsed .unsettled-hero-toggle { transform: rotate(-90deg); }
+.unsettled-hero-toggle { cursor: pointer; user-select: none; display: inline-block; margin-right: 6px; font-size: 0.8rem; color: var(--success); transition: transform 0.2s, opacity 0.2s; vertical-align: middle; border-radius: 6px; }
+.unsettled-hero-toggle:hover { opacity: 1; text-shadow: 0 0 10px var(--success); }
+/* 收起态：整条横幅只留三角，金额、文案、按钮全部隐藏（截屏给顾客看时用） */
+.unsettled-hero.collapsed {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    animation: none;
+    padding: 2px 4px;
+    margin-bottom: 8px;
+}
+.unsettled-hero.collapsed .unsettled-hero-toggle {
+    transform: rotate(-90deg);
+    font-size: 1rem;
+    margin-right: 0;
+    padding: 4px 12px;
+    opacity: 0.75;
+    background: rgba(255, 255, 255, 0.05);
+}
+.unsettled-hero.collapsed .unsettled-hero-text,
 .unsettled-hero.collapsed .unsettled-hero-sub,
 .unsettled-hero.collapsed .unsettled-hero-btn { display: none; }
 .unsettled-hero-title { color: #fff; font-size: 1.02rem; font-weight: 700; letter-spacing: 1px; line-height: 1.6; }
